@@ -26,12 +26,12 @@ class LichLamCaNhanGUI:
         headerSchedule.pack(pady=(10, 0), fill='x')
         headerSchedule.pack_propagate(False)  # Không thay đổi kích thước theo nội dung
        
-        titleSchedule = tk.Label(headerSchedule, text="LỊCH LÀM CÁ NHÂN", font=("Arial", 16, "bold"), bg="#908181", fg="black")
-        titleSchedule.pack(side="left", expand=True)  # Căn giữa bên trái
+        titleSchedule = tk.Label(headerSchedule, text="LỊCH LÀM VIỆC", font=("Arial", 16, "bold"), bg="#908181", fg="black")
+        titleSchedule.pack(side="right", expand=True)  # Căn giữa bên trái
 
-        self.close_icon = ImageTk.PhotoImage(file=self.myPath + "Icon\\close.png")
+        self.close_icon = ImageTk.PhotoImage(file=self.myPath + "Icon\\arrow.png")
         close_button = tk.Button(headerSchedule, image=self.close_icon, height=40, width=40,bg="#908181", bd=0, command=scheduleWindow.destroy)
-        close_button.pack(side="right")  # Đặt nút bên phải của header
+        close_button.pack(side="left")  # Đặt nút bên phải của header
 
 
 
@@ -110,32 +110,13 @@ class LichLamCaNhanGUI:
 
 
         # Frame bên trái của footer (phần còn lại của footer)
-        left_footer_frame = tk.Frame(footer,width=780, bg="#fff")
+        left_footer_frame = tk.Frame(footer,width=780, bg="blue")
         left_footer_frame.pack(side="left", fill='both', anchor="w")  # Chiếm hết phần còn lại của footer
         left_footer_frame.pack_propagate(False)
 
-        
-        # Cấu hình cột để chúng giãn đều
-        left_footer_frame.grid_columnconfigure(0, weight=1)
-        left_footer_frame.grid_columnconfigure(1, weight=1)
-
-       # Hàng đầu tiên (Nhân viên) và thứu 2
-        inpEmployee=utilView.create_input_with_label_v2(left_footer_frame, "Nhân viên:", 0, 0) 
-        inpMon=utilView.create_input_with_label_v2(left_footer_frame, "Thứ 2:", 0,2) 
-
-        # Hàng thứ 2 (Thứ 3 và Thứ4)
-        inpTues=utilView.create_input_with_label_v2(left_footer_frame, "Thứ 3:", 1, 0) 
-        inpWed=utilView.create_input_with_label_v2(left_footer_frame, "Thứ 4:", 1, 2) 
-
-        # Hàng thứ 3 (Thứ 5 và Thứ 6)
-        inpThur=utilView.create_input_with_label_v2(left_footer_frame, "Thứ 5:", 2, 0) 
-        inpFri=utilView.create_input_with_label_v2(left_footer_frame, "Thứ 6:", 2, 2)  
-
-        # Hàng thứ 4 (Thứ 7 và CN)
-        inpSat=utilView.create_input_with_label_v2(left_footer_frame, "Thứ 7:", 3, 0) 
-        inpSun=utilView.create_input_with_label_v2(left_footer_frame, "Chủ nhật:", 3, 2) 
-
-
+        # Thêm bảng vào left_footer_frame
+        self.create_footer_table(left_footer_frame) 
+       
 
 
         # Frame bên phải của footer, width=200 và chiều cao bằng footer
@@ -186,6 +167,47 @@ class LichLamCaNhanGUI:
 
         scheduleWindow.mainloop()
 
+    def add_sample_footer_rows(self):
+        """Thêm dữ liệu mẫu vào bảng của footer."""
+        shift_data = [
+            ("Ca 1", "09:00", "13:00"),
+            ("Ca 2", "13:00", "17:00"),
+            ("Ca 3", "17:00", "21:00")
+        ]
+
+        for shift in shift_data:
+            self.footer_table.insert("", "end", values=shift)
+    def create_footer_table(self, parent_frame):
+        """Tạo bảng dưới phần left footer với thanh cuộn nếu vượt quá chiều cao."""
+        columns = ("Ca làm", "Thời gian vào", "Thời gian ra")
+
+        # Tạo khung cho Treeview và Scrollbar
+        table_frame = tk.Frame(parent_frame, width=780, height=170)
+        table_frame.pack(fill='both', expand=True)
+
+        # Tạo Scrollbar
+        scrollbar = tk.Scrollbar(table_frame)
+        scrollbar.pack(side='right', fill='y')
+
+        # Tạo Treeview với các cột
+        self.footer_table = ttk.Treeview(table_frame, columns=columns, show="headings", height=7, yscrollcommand=scrollbar.set)
+        self.footer_table.pack(side='left', fill='both', expand=True)
+
+        # Kết nối thanh cuộn với Treeview
+        scrollbar.config(command=self.footer_table.yview)
+
+        # Đặt tiêu đề cho các cột
+        self.footer_table.heading("Ca làm", text="Ca làm")
+        self.footer_table.heading("Thời gian vào", text="Thời gian vào")
+        self.footer_table.heading("Thời gian ra", text="Thời gian ra")
+
+        # Đặt kích thước cột
+        self.footer_table.column("Ca làm", width=200, anchor='center')
+        self.footer_table.column("Thời gian vào", width=250, anchor='center')
+        self.footer_table.column("Thời gian ra", width=250, anchor='center')
+
+        # Thêm dữ liệu mẫu
+        self.add_sample_footer_rows()    
 
     def show_selected_dates(self):
         """Xác thực ngày bắt đầu và ngày kết thúc."""

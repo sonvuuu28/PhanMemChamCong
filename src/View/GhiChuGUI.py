@@ -1,89 +1,102 @@
 import tkinter as tk
-import utilView
 import customtkinter as ctk
-from time import strftime
-from PIL import Image, ImageTk
+import datetime
+from tkcalendar import DateEntry
 
 class GhiChuGUI:
-	
-	def __init__(self):
-		self.staff = "Nguyễn Văn A - #01"
-		self.shift = "#015"
-		self.myPath = "C:\\Users\\X\\HocPython\\PJ\\Test\\src\\"
-		self.initUI()
 
-	def initUI(self):
-		noteWindow = tk.Tk()
-		wWindow = 300
-		hWindow = 380
-		noteWindow.geometry(f"{wWindow}x{hWindow}")
-		noteWindow.overrideredirect(True)
-		frameNote = utilView.frameUtil(noteWindow, wWindow, hWindow, 0, 0, bg = '#ffffff')
+    def __init__(self):
+        self.initUI()
 
-		headerNote = utilView.frameUtil(frameNote, wWindow, 80, 0, 0, bg='white')
+    def initUI(self):
+        # Khởi tạo cửa sổ
+        noteWindow = tk.Tk()
+        wWindow = 300
+        hWindow = 380
 
-		titleNote = tk.Label(headerNote, text="GHI CHÚ", foreground="black", bg='white', font=("Arial", 12, "bold"))                            
-		staffNote = tk.Label(
-			headerNote, 
-			text=f"Nhân viên: {self.staff}", 
-			foreground="black", 
-			bg='white', font=("Arial",    10, "bold")
-		)
-		shiftNote = tk.Label(
-			headerNote, 
-			text=f"Ca làm     : {self.shift}", 
-			foreground="black", 
-			bg='white', font=("Arial",    10, "bold")
-		)
+        noteWindow.geometry(f"{wWindow}x{hWindow}")
+        noteWindow.overrideredirect(True)
 
-		titleNote.place(x=100, y=9)
-		staffNote.place(x=10, y=35)
-		shiftNote.place(x=10, y=55)
-		
-		# Tạo button với icon
-		close_icon = ImageTk.PhotoImage(file=self.myPath + "Icon\\close.png")  # Thay bằng đường dẫn đến ảnh của bạn
-		close_button = tk.Button(headerNote, image=close_icon, width=40, height=40, bg="#fff", borderwidth=0, highlightthickness=0,cursor="hand2", command=lambda: noteWindow.destroy())
-		close_button.place(x=260, y=0)
+        # Header
+        headerNote = tk.Frame(noteWindow, width=wWindow, height=40, bg='white')
+        headerNote.pack_propagate(False)
+        headerNote.pack(side=tk.TOP, fill=tk.X)
 
-		# 
-		bodyNote = tk.Frame(noteWindow, width=300, height=300, bg="#fff")
-		bodyNote.pack_propagate(False)  # Không thay đổi kích thước của frame theo các widget con
-		bodyNote.place(x=0, y=80)
+        # Tiêu đề căn giữa
+        titleNote = tk.Label(headerNote, text="GHI CHÚ", foreground="black", bg='white', font=("Arial", 12, "bold"))
+        titleNote.pack(anchor="center", expand=True, pady=5)
+
+        # Body
+        bodyNote = tk.Frame(noteWindow, width=wWindow, height=270, bg="#fff")
+        bodyNote.pack_propagate(False)
+        bodyNote.pack(side=tk.TOP, fill=tk.X)
+
+         # Phần trên của body: Chọn tháng và năm
+        select_frame = tk.Frame(bodyNote, width=300, height=40, bg="#fff")
+        select_frame.pack(anchor="e")
+        select_frame.pack_propagate(False)
+
+        tk.Label(select_frame, text="Thời gian:", font=("Arial", 11), bg="#fff").pack(side="left", padx=10)
         
-		
-        # Tạo Text widget
-		contentNote = tk.Text(bodyNote, wrap=tk.WORD, font=("Arial", 11), highlightthickness=1)
-		contentNote.pack(padx=10, pady=5)
-		contentNote.place(x=10, y=5,  width=280, height=200)  # Đặt ở giữa giữa frame
-		  
-          # Tạo frame cho nút
-		button_frame = tk.Frame(bodyNote, width=280, height=40, bg="white")
-		button_frame.pack(padx=10)
-		button_frame.place(x=10, y=225)  # Đặt frame nút ở cuối cửa sổ
-	
-        # Tạo hai nút
-		cancel_button = tk.Button(button_frame, text="Hủy", fg="black", command=noteWindow.destroy)
-		cancel_button.pack(side="left", padx=10)
-		cancel_button.place(x=0, y=4,width=100, height=32)
+       
+        # Tính toán ngày bắt đầu và kết thúc của tuần hiện tại
+        today = datetime.date.today()
+        start_of_week = today - datetime.timedelta(days=today.weekday())  # Thứ 2 của tuần
 
-		done_button = tk.Button(button_frame, text="Xong", fg="black" )  
-		done_button.place(x=180, y=4, width=100, height=32)
-		
+        # Thêm DateEntry cho ngày bắt đầu với định dạng dd/mm/yyyy
+        self.start_date = DateEntry(select_frame, width=12, background='darkblue', 
+                                    foreground='white', borderwidth=2, 
+                                    year=start_of_week.year, month=start_of_week.month, 
+                                    day=start_of_week.day, date_pattern='dd/mm/yyyy')
+        self.start_date.pack(side="left", padx=10)
 
-        
-		noteWindow.mainloop()
 
-	def enter_label(self, label, bgc):
-		label.config(bg=bgc)
-            
-			
-	def leave_label(self, label, bgc):
-		label.config(bg=bgc)
-	
-	def hover(self, label):
-		label.bind("<Enter>", lambda event : self.enter_label(label, "#FBF6F6"))
-		label.bind("<Leave>", lambda event: self.leave_label(label, "#d9d9d9"))
-    
+
+
+        # Text Area với height=260
+        contentNote = tk.Text(bodyNote, wrap=tk.WORD, font=("Arial", 11), highlightthickness=1)
+        contentNote.place(x=10, y=40, width=280, height=220)  # Đặt Text area bên dưới DateEntry
+
+        # Footer
+        footerNote = tk.Frame(noteWindow, width=wWindow, height=60, bg="#fff")
+        footerNote.pack_propagate(False)
+        footerNote.pack(side=tk.BOTTOM, fill=tk.X, pady=(0,10))
+
+        # Nút Hủy căn trái dùng customtkinter
+        cancel_button = ctk.CTkButton(footerNote, 
+            text="Hủy",
+            width=100, height=30, 
+            fg_color="#000",  # Màu nền
+            text_color="#fff",  # Màu chữ
+            font=("Arial", 12),  # Font chữ
+            corner_radius=4,  # Bo góc 4px
+            border_width=0,  # Không có viền
+            hover_color="#383838", 
+            command=noteWindow.destroy
+        )
+        cancel_button.pack(side=tk.LEFT, padx=(30,10))
+
+        # Nút Lưu căn phải dùng customtkinter
+        save_button = ctk.CTkButton(footerNote, 
+            text="Lưu", 
+            width=100, height=30, 
+            fg_color="#000",  # Màu nền
+            text_color="#fff",  # Màu chữ
+            font=("Arial", 12),  # Font chữ
+            corner_radius=4,  # Bo góc 4px
+            border_width=0,  # Không có viền
+            hover_color="#383838", 
+            command=lambda: self.save_note_content(contentNote)
+        )
+        save_button.pack(side=tk.RIGHT, padx=(10,30))
+
+        noteWindow.mainloop()
+
+    def save_note_content(self, text_widget):
+        """Lưu nội dung ghi chú từ Text widget"""
+        content = text_widget.get("1.0", tk.END).strip()
+        print(f"Nội dung ghi chú: {content}")  # Tạm thời in ra để kiểm tra, có thể lưu vào file hay cơ sở dữ liệu
+
 
 if __name__ == '__main__':
-    trang_chu = GhiChuGUI()
+    GhiChuGUI()
