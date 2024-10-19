@@ -90,3 +90,15 @@ def create_input_with_label(parent, label_text, row, column):
     entry.grid(row=row, column=column * 2 + 1, padx=(10, 10), pady=(10, 0))  # Đặt entry bên phải label và cách 10px
 
     return entry  # Trả về đối tượng entry nếu cần sử dụng sau này
+
+    
+def create_input_with_label_v2(parent, label_text, row, column, label_width=0):
+ # Tạo label
+    label = tk.Label(parent, text=label_text, font=("Arial", 11), bg="#fff")
+    label.grid(row=row, column=column, padx=(10, 5), pady=(10, 0), sticky='w')  # Đặt label ở bên trái
+
+    # Tạo entry
+    entry = ctk.CTkEntry(parent, width=180, height=30, fg_color="white", text_color="black", font=("Arial", 11))
+    entry.grid(row=row, column=column + 1, padx=(10, 10), pady=(10, 0))  # Đặt entry bên phải label
+
+    return entry  # Trả về đối tượng entry nếu cần sử dụng sau này
