@@ -68,10 +68,10 @@ class TrangChuGUI:
             from n7_ThongBaoGUI import ThongBaoGUI
             thongBao = ThongBaoGUI()
             
-        # if name == "Profile" and window:
-        #     # window.destroy() 
-        #     from ThongTinTaiKhoanGUI import LichLamCaNhanGUI
-        #     LuongGUI = LichLamCaNhanGUI()
+        if name == "Profile" and window:
+            # window.destroy() 
+            from n8_ThongTinTaiKhoan import ThongTinTaiKhoanGUI
+            ThongTinTaiKhoanGUI()
         
     def UI(self):
         window = tk.Tk()
@@ -121,7 +121,7 @@ class TrangChuGUI:
         DangXuat = utilView.cusButtonUtil(frameSetting, 'Đăng Xuất', 0, 0, 136, 40, text_color='black',
                               fg_color='#D9D9D9', font=("", 13, "bold"), corner_radius=5, hover_color='#CACACA', command=lambda: self.nhomNut("DangXuat", window))
         ThongTinCaNhan = utilView.cusButtonUtil(frameSetting, 'Thông Tin Cá Nhân', 0, 41, 136, 40, text_color='black',
-                              fg_color='#D9D9D9', font=("", 13, "bold"), corner_radius=5, hover_color='#CACACA', command=lambda: self.nhomNut("Profile"))        
+                              fg_color='#D9D9D9', font=("", 13, "bold"), corner_radius=5, hover_color='#CACACA', command=lambda: self.nhomNut("Profile", window))        
         frameSetting.place_forget()
         self.click_label(label_setting, frameSetting)
 
