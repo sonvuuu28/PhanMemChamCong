@@ -4,6 +4,7 @@ from time import strftime
 from datetime import datetime
 from tkinter import messagebox
 import face_recognition
+from datetime import datetime
 
 def msg_boxUtil(title, description):
     messagebox.showinfo(title, description)
@@ -30,7 +31,7 @@ def entryUtil(frame, text, x, y, width, **kwargs):
     entry.insert(0, text) 
     entry.place(x=x, y=y)
     entry.bind("<FocusIn>", click)
-    entry.bind("<FocusOut>", out_click)
+    # entry.bind("<FocusOut>", out_click)
     
     return entry
     
@@ -47,7 +48,7 @@ def frameUtil(frame, width, height, x, y, **kwargs):
     frame.place(x=x, y=y)  
     return frame
 
-def lineUtil(parrent, head, tail, y):
+def lineUtil(parrent, head, tail, y, **kwargs):
     canvas = tk.Canvas(master=parrent, width=500, height=2)
     canvas.configure(bg="white", highlightbackground = 'white')
     canvas.place(x = head, y = y)
@@ -102,3 +103,25 @@ def create_input_with_label_v2(parent, label_text, row, column, label_width=0):
     entry.grid(row=row, column=column + 1, padx=(10, 10), pady=(10, 0))  # Đặt entry bên phải label
 
     return entry  # Trả về đối tượng entry nếu cần sử dụng sau này
+
+def convert_date_format(date_str):
+    try:
+        # Chuyển đổi chuỗi ngày tháng sang định dạng datetime
+        date_obj = datetime.strptime(date_str, '%d/%m/%Y')
+
+        # Kiểm tra năm từ 1900 đến 2100
+        if 1900 <= date_obj.year <= 2100:
+            # Chuyển định dạng sang 'yyyy-mm-dd'
+            new_date_str = date_obj.strftime('%Y-%m-%d')
+            return new_date_str
+        else:
+            return 0
+    except ValueError:
+        return 0
+    
+def kiem_tra_so_dien_thoai(so_dien_thoai):
+    # Chỉ chấp nhận số điện thoại có đúng 10 số và bắt đầu bằng số 0
+    if len(so_dien_thoai) == 10 and so_dien_thoai.startswith('0') and so_dien_thoai.isdigit():
+        return so_dien_thoai
+    else:
+        return False

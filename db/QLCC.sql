@@ -10,7 +10,8 @@ CREATE TABLE [NhanVien] (
   [DiaChi] nvarchar(255) not null,
   [SDT] nvarchar(15) not null,
   [ChucVu] nvarchar(100),
-  [deleteStatus] bit not null
+  [HinhAnh] nvarchar(100),
+  [Status] bit not null
 )
 CREATE TABLE [PhanQuyen] (
   [MaQuyen] nvarchar(255) PRIMARY KEY,
@@ -25,8 +26,8 @@ CREATE TABLE [TaiKhoan] (
   [TenDangNhap] nvarchar(255) not null,
   [MatKhau] nvarchar(255) not null,
   [MaQuyen] nvarchar(255) not null,
-  [MaNhanVien] nvarchar(255),
-  [deleteStatus] bit not null,
+  [MaNhanVien] nvarchar(255) unique,
+  [Status] bit not null,
   FOREIGN KEY ([MaNhanVien]) REFERENCES [NhanVien] ([MaNhanVien]),
   FOREIGN KEY ([MaQuyen]) REFERENCES [PhanQuyen] ([MaQuyen])
 )
@@ -36,7 +37,7 @@ CREATE TABLE [CaLam] (
   [TenCa] nvarchar(50) not null,
   [ThoiGianVao] TIME not null,
   [ThoiGianRa] TIME not null,
-  [deleteStatus] bit not null
+  [Status] bit not null
 )
 GO
 CREATE TABLE [LichLam] (
@@ -44,7 +45,7 @@ CREATE TABLE [LichLam] (
   [MaNhanVien] nvarchar(255),
   [MaCa] nvarchar(255),
   [Ngay] DATE not null,
-  [deleteStatus] bit not null,
+  [Status] bit not null,
   FOREIGN KEY ([MaNhanVien]) REFERENCES [NhanVien] ([MaNhanVien]),
   FOREIGN KEY ([MaCa]) REFERENCES [CaLam] ([MaCa])
 )	
@@ -56,7 +57,7 @@ CREATE TABLE [BangChamCong] (
   [Ngay] DATE not null,
   [TinhTrang] nvarchar(50) not null,
   [MaNhanVien] nvarchar(255),
-  [deleteStatus] bit not null,
+  [Status] bit not null,
   FOREIGN KEY ([MaNhanVien]) REFERENCES [NhanVien] ([MaNhanVien])
 )
 GO
@@ -65,9 +66,11 @@ CREATE TABLE [BangLuong] (
   [Thang] INT not null,
   [Nam] INT not null,
   [PhuCap] DECIMAL(10, 2) not null,
+  [KhauTru] DECIMAL(10, 2) not null,
   [HeSoLuong] DECIMAL(10, 2) not null,
+  [TongTien] DECIMAL(10, 2) not null,
   [MaNhanVien] nvarchar(255),
-  [deleteStatus] bit not null,
+  [Status] bit not null,
   FOREIGN KEY ([MaNhanVien]) REFERENCES [NhanVien] ([MaNhanVien])
 )
 GO
@@ -79,12 +82,12 @@ CREATE TABLE [GhiChu] (
 GO
 
 /*
-drop table GhiChu
-drop table BangLuong
-drop table LichLam
-drop table CaLam
-drop table TaiKhoan
-drop table PhanQuyen
-drop table BangChamCong
-drop table NhanVien
+drop table IF EXISTS GhiChu
+drop table IF EXISTS BangLuong
+drop table IF EXISTS LichLam
+drop table IF EXISTS CaLam
+drop table IF EXISTS TaiKhoan
+drop table IF EXISTS PhanQuyen
+drop table IF EXISTS BangChamCong
+drop table IF EXISTS NhanVien
 */

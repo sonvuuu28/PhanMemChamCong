@@ -1,46 +1,47 @@
 use QLCC 
 
-INSERT INTO [NhanVien] ([MaNhanVien], [Ten], [NgaySinh], [GioiTinh], [DiaChi], [SDT], [ChucVu], [deleteStatus])
+INSERT INTO [NhanVien] ([MaNhanVien], [Ten], [NgaySinh], [GioiTinh], [DiaChi], [SDT], [ChucVu], [HinhAnh], Status)
 VALUES 
-('NV001', N'Nguyen Van A', '1990-01-01', N'Nam', N'Hanoi', '0909123456', N'Nhan vien', 0),
-('NV002', N'Tran Thi B', '1992-05-10', N'Nu', N'Ho Chi Minh', '0919123456', N'Ke toan', 0);
+('NV001', N'Nguyễn Văn A', '1990-01-01', N'Nam', N'123 An Dương Vương', '0909123456', N'Nhân Viên', 'NV001.png', 1),
+('NV002', N'Trần Thị B', '1992-05-10', N'Nữ', N'123 Nguyễn Trãi', '0919123456', N'Quản Lý', 'NV002.png', 1),
+('NV003', N'máy chấm công', '1992-05-10', N'no', N'no', 'no', N'Quản Lý', 'no', 0);
 
+insert into PhanQuyen(MaQuyen, TenQuyen, QuyenAdmin, QuyenChamCong, QuyenNhanVien) values
+('Q001', N'Quyền Nhân Viên', 0, 0, 1),-- Quyền nhân viên
+('Q002', N'Quyền Quản Lý', 1, 0, 0),-- Quyền quản lý nhân viên cả admin 
+('Q003', N'Quyền Máy Chấm Công', 0, 1, 0)-- Quyền chấm công dùng ở các máy chấm công
 
-INSERT INTO [CaLam] ([MaCa], [TenCa], [ThoiGianVao], [ThoiGianRa], [deleteStatus])
+INSERT INTO [CaLam] ([MaCa], [TenCa], [ThoiGianVao], [ThoiGianRa], Status)
 VALUES 
-('CA001', N'Ca sang', '08:00:00', '12:00:00', 1),
-('CA002', N'Ca chieu', '13:00:00', '17:00:00', 1);
+('CA001', N'Ca sáng', '08:00:00', '12:00:00', 1),
+('CA002', N'Ca chiều', '13:00:00', '17:00:00', 1);
 
-INSERT INTO [LichLam] ([MaLich], [MaNhanVien], [MaCa], [Ngay], [deleteStatus])
+INSERT INTO [LichLam] ([MaLich], [MaNhanVien], [MaCa], [Ngay], [Status])
 VALUES 
-('LL001', 'NV001', 'CA001', '2024-10-11', 0),
-('LL002', 'NV002', 'CA002', '2024-10-11', 0);
+('LL001', 'NV001', 'CA001', '2024-10-11', 1),
+('LL002', 'NV002', 'CA002', '2024-10-11', 1);
 
-INSERT INTO [BangChamCong] ([MaBCC], [ThoiGianVao], [ThoiGianRa], [Ngay], [TinhTrang], [MaNhanVien], [deleteStatus])
+INSERT INTO [BangChamCong] ([MaBCC], [ThoiGianVao], [ThoiGianRa], [Ngay], [TinhTrang], [MaNhanVien], [Status])
 VALUES 
 ('BCC001', '08:05:00', '12:00:00', '2024-10-11', N'Dung gio', 'NV001', 0),
 ('BCC002', '13:10:00', '17:00:00', '2024-10-11', N'Dung gio', 'NV002', 0);
 
-INSERT INTO [BangLuong] ([MaBangLuong], [Thang], [Nam], [PhuCap], [HeSoLuong], [MaNhanVien], [deleteStatus])
+INSERT INTO [BangLuong] ([MaBangLuong], [Thang], [Nam], [PhuCap], KhauTru, [HeSoLuong], TongTien, [MaNhanVien], [Status])
 VALUES 
-('BL001', 10, 2024, 500.00, 23.000, 'NV001', 0),
-('BL002', 10, 2024, 300.00, 23.00, 'NV002', 0);
+('BL001', 10, 2024, 500.00, 0.000, 23.000, 3000.000,'NV001', 1),
+('BL002', 10, 2024, 500.00, 0.000, 23.000, 3000.000,'NV002', 1);
 
 INSERT INTO [GhiChu] ([MaGC], [Ngay], [NoiDung])
 VALUES 
-('GC001', '2024-10-11', N'Hoan thanh cong viec trong ngay.'),
-('GC002', '2024-10-11', N'Ve som 30 phut vi ly do ca nhan.');
+('GC001', '2024-10-11', N'Hoàn thành công việc trong ngày.'),
+('GC002', '2024-10-11', N'Nguyễn Văn A về sớm 30p vì lý do cá nhân.');
 
-INSERT INTO [PhanQuyen] ([MaQuyen], [TenQuyen], [QuyenChamCong], [QuyenAdmin], [QuyenNhanVien] )
+INSERT INTO [TaiKhoan] ([MaTK], [TenDangNhap], [MatKhau], [MaQuyen], [MaNhanVien], Status)
 VALUES 
-('Q001', N'Quyền chấm công', 1, 0, 0),  -- Quyền chấm công dùng ở các máy chấm công
-('Q002', N'Quyền admin', 1, 1, 0),  -- Quyền quản lý nhân viên cả admin 
-('Q003', N'Quyền nhân viên', 0, 1, 0)       -- Quyền nhân viên
+('TK001', N'nhanvien1', N'123', 'Q001', 'NV001', 1),
+('TK002', N'nhanvien2', N'123', 'Q002', 'NV002', 1),
+('TK003', N'chamcong1', N'123', 'Q003', 'NV003', 1);
 
-INSERT INTO [TaiKhoan] ([MaTK], [TenDangNhap], [MatKhau], [MaQuyen], [MaNhanVien], [deleteStatus])
-VALUES 
-('TK001', N'nguyenvana', N'password123', 'Q001', 'NV001', 0),
-('TK002', N'tranthib', N'password456', 'Q002', 'NV002', 0);
 
 select * from NhanVien
 select * from [GhiChu]
