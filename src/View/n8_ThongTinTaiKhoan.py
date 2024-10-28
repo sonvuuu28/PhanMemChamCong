@@ -30,13 +30,13 @@ class ThongTinTaiKhoanGUI:
         header = utilView.labelUtil(frameBiggest, "TÀI KHOẢN", 0, 0, foreground="black", bg='#908181', font=("Arial", 12, "bold"), width = 30, height = 2)
         
         
-        utilView.labelUtil(frameBiggest,'Mã',20, 60, bg='#ffffff', font=("Arial", 12))
-        utilView.labelUtil(frameBiggest,'Tên',20, 100, bg='#ffffff', font=("Arial", 12))
-        utilView.labelUtil(frameBiggest,'Ngày Sinh',20, 140, bg='#ffffff', font=("Arial", 12))
-        utilView.labelUtil(frameBiggest,'Giới Tính',20, 180, bg='#ffffff', font=("Arial", 12))
-        utilView.labelUtil(frameBiggest,'Địa Chỉ',20, 220, bg='#ffffff', font=("Arial", 12))
-        utilView.labelUtil(frameBiggest,'SĐT',20, 260, bg='#ffffff', font=("Arial", 12))
-        utilView.labelUtil(frameBiggest,'Chức Vụ',20, 300, bg='#ffffff', font=("Arial", 12))
+        utilView.labelUtil(frameBiggest,'Mã',20, 60, bg='#ffffff', font=("Arial", 12, "bold"))
+        utilView.labelUtil(frameBiggest,'Tên',20, 100, bg='#ffffff', font=("Arial", 12, "bold"))
+        utilView.labelUtil(frameBiggest,'Ngày Sinh',20, 140, bg='#ffffff', font=("Arial", 12, "bold"))
+        utilView.labelUtil(frameBiggest,'Giới Tính',20, 180, bg='#ffffff', font=("Arial", 12, "bold"))
+        utilView.labelUtil(frameBiggest,'Địa Chỉ',20, 220, bg='#ffffff', font=("Arial", 12, "bold"))
+        utilView.labelUtil(frameBiggest,'SĐT',20, 260, bg='#ffffff', font=("Arial", 12, "bold"))
+        utilView.labelUtil(frameBiggest,'Chức Vụ',20, 300, bg='#ffffff', font=("Arial", 12, "bold"))
 
         utilView.labelUtil(frameBiggest,'NV001',120, 60, bg='#ffffff', font=("Arial", 12, "italic"))
         utilView.labelUtil(frameBiggest,'Nguyễn Văn A',120, 100, bg='#ffffff', font=("Arial", 12, "italic"))
