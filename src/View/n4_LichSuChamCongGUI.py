@@ -1,154 +1,148 @@
 import tkinter as tk
-from tkinter import ttk  # Import ttk
-from tkcalendar import DateEntry
-from PIL import Image, ImageTk
-import os
-import sys
+from tkinter import ttk, messagebox
+from tkcalendar import DateEntry  # Import DateEntry
+from PIL import ImageTk, Image
+from tkinter import simpledialog
+from datetime import datetime
+import os, sys
 
-class LichSuChamCongGUI:
+# Định nghĩa đường dẫn cho các thư mục cần thiết
+current_dir = os.path.dirname(os.path.abspath(__file__))
+bus_dir = os.path.join(current_dir, '../BUS')
+sys.path.append(bus_dir)
+from LsccBUS import LsccBUS
+
+dto_dir = os.path.join(current_dir, '../DTO')
+sys.path.append(dto_dir)
+from LsccDTO import LsccDTO
+
+class ShiftGUI:
     def __init__(self):
-        self.UI()
-    
-    def enter_label(self, label, anhGoc, title):
-        label.config(image=anhGoc)
-        if title is not None:
-            title.config(fg='#5A5A5A')
-            
-    def leave_label(self, label, anhHover, title):
-        label.config(image=anhHover)
-        if title is not None:
-            title.config(fg='#000000')
-            
-    def hover(self, label, anhGoc, anhHover, title):
-        label.bind("<Enter>", lambda event: self.enter_label(label, anhHover, title))
-        label.bind("<Leave>", lambda event: self.leave_label(label, anhGoc, title))
-    
-    def backTrangChu(self, window):
-        window.destroy()
-        from n1_TrangChuGUI import TrangChuGUI
-        TrangChuGUI()
-        
-    def UI(self):
-        ## đường dẫn động đến Icon
-        current_dir = os.path.dirname(os.path.abspath(__file__))
+        self.shiftWindow = None
+        self.is_view_detail = False
+
+        # Khởi tạo giao diện người dùng
+        self.initUI()
+
+        # Khởi tạo BUS và danh sách ca làm
+        self.lich_su_bus = LsccBUS.getInstance()  # Lấy instance của LsccBUS
+        self.ds_lichsu = self.lich_su_bus.getall()  # Lấy tất cả dữ liệu lịch sử chấm công
+
+        # Hiển thị bảng dữ liệu
+        self.render_table(self.ds_lichsu)
+
+        # Bắt đầu vòng lặp chính của cửa sổ
+        self.shiftWindow.mainloop()
+
+    def initUI(self):
         icon_dir = os.path.join(current_dir, '../Icon')
-        
-        root = tk.Tk()
-        root.title("Check In/Check Out System")
-        root.geometry("1000x650+250+40")
 
-        main_frame = tk.Frame(root)
-        main_frame.pack(fill="both", expand=True)
+        # Khởi tạo cửa sổ chính
+        self.shiftWindow = tk.Tk()
+        wWindow = 1000
+        hWindow = 650
+        self.shiftWindow.geometry(f"{wWindow}x{hWindow}+300+40")
+        self.shiftWindow.title("Quản Lý Ca Làm")
 
-        left_panel = tk.Frame(main_frame, bg="white")
-        left_panel.grid(row=0, column=0, sticky="nsew")
+        # Frame chứa tất cả các widget
+        frameShift = tk.Frame(self.shiftWindow, bg='#ffffff')
+        frameShift.pack(fill=tk.BOTH, expand=True)
 
-        right_panel = tk.Frame(main_frame, bg="white")
-        right_panel.grid(row=0, column=1, sticky="nsew")
+        # Tạo giao diện bên trái (nơi nhập liệu)
+        left_panel = tk.Frame(frameShift, bg="white", width=400)
+        left_panel.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
 
-        main_frame.grid_columnconfigure(0, weight=1)
-        main_frame.grid_columnconfigure(1, weight=1)
-        main_frame.grid_rowconfigure(0, weight=1)
-    
-        
-        # ----------------- Phần Bên Trái -----------------
-        # Date selection
-        # Thêm label nội dung trở về vào góc trái cùng
-        homeImage = Image.open(os.path.join(icon_dir, "home.png"))
-        tk_homeImage = ImageTk.PhotoImage(homeImage)
-        homeImageHover = Image.open(os.path.join(icon_dir, "homeHover.png"))
-        tk_homeImageHover = ImageTk.PhotoImage(homeImageHover)
+        # Tạo giao diện bên phải (nơi hiển thị bảng)
+        right_panel = tk.Frame(frameShift, bg="white", width=600)
+        right_panel.grid(row=0, column=1, padx=10, pady=10, sticky="nsew")
 
-        label_home = tk.Label(left_panel, image=tk_homeImage, bg='white')
-        label_home.image = tk_homeImage
-        label_home.place(x=30, y=30)
-        label_home.bind("<Button-1>", lambda event: self.backTrangChu(root))
-        self.hover(label_home, tk_homeImage, tk_homeImageHover, None)
-        label_home.pack(side="top", anchor="sw", padx=10, pady=10)
-        
-        nv_label = tk.Label(left_panel, text="Nhân Viên:")
-        nv_label.pack(pady=10)
-        nv = tk.Entry(left_panel, width=20, bg='#E5E5E5')
-        nv.pack(pady=5)
-        
-        date_label = tk.Label(left_panel, text="Ngày:")
-        date_label.pack(pady=10)
+        frameShift.grid_columnconfigure(0, weight=1)
+        frameShift.grid_columnconfigure(1, weight=2)
 
-        cal = DateEntry(left_panel, width=16, background="darkblue", foreground="white", borderwidth=2)
-        cal.pack(pady=5)
+        # ---------------------- Phần Bên Trái ----------------------
+        self.maca_label = tk.Label(left_panel, text="Mã Ca:", bg="white")
+        self.maca_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.maca_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+        self.maca_entry.grid(row=0, column=1, padx=10, pady=10)
 
-        # Check-in time
-        checkin_label = tk.Label(left_panel, text="Check in time:")
-        checkin_label.pack(pady=10)
+        self.ngay_label = tk.Label(left_panel, text="Ngày:", bg="white")
+        self.ngay_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
+        self.ngay_entry = DateEntry(left_panel, width=16, background="darkblue", foreground="white", borderwidth=2)
+        self.ngay_entry.grid(row=1, column=1, padx=10, pady=10)
 
-        checkin_time = tk.Label(left_panel, text="--:--", font=("Helvetica", 14))
-        checkin_time.pack(pady=5)
+        self.tgvao_label = tk.Label(left_panel, text="Thời gian vào:", bg="white")
+        self.tgvao_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
+        self.tgvao_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+        self.tgvao_entry.grid(row=2, column=1, padx=10, pady=10)
 
-        # Check-out time
-        checkout_label = tk.Label(left_panel, text="Check out time:")
-        checkout_label.pack(pady=10)
+        self.tgra_label = tk.Label(left_panel, text="Thời gian ra:", bg="white")
+        self.tgra_label.grid(row=3, column=0, padx=10, pady=10, sticky="w")
+        self.tgra_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+        self.tgra_entry.grid(row=3, column=1, padx=10, pady=10)
 
-        checkout_time = tk.Label(left_panel, text="--:--", font=("Helvetica", 14))
-        checkout_time.pack(pady=5)
-        
-        ## 
+        self.tt_label = tk.Label(left_panel, text="Tình trạng:", bg="white")
+        self.tt_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+        self.tt_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+        self.tt_entry.grid(row=4, column=1, padx=10, pady=10)
 
-        # ----------------- Phần Bên Phải -----------------
-        details_label = tk.Label(right_panel, text="Chi tiết lịch sử chấm công", font=("Helvetica", 16), bg="white")
-        details_label.pack(pady=(20, 10))
+        self.edit_button = tk.Button(left_panel, text="Sửa", command=self.on_edit_button_click)
+        self.edit_button.grid(row=5, column=0, padx=10, pady=20, sticky="w")
 
-        # Tạo bảng Treeview cho phần chi tiết chấm công
-        columns = ('#1', '#2', '#3', '#4', '#5')
+        # ---------------------- Phần Bên Phải ----------------------
+        details_label = tk.Label(right_panel, text="Chi tiết ca làm", font=("Helvetica", 16), bg="white")
+        details_label.pack(pady=20)
 
-        tree = ttk.Treeview(right_panel, columns=columns, show='headings', height=5)
-        tree.heading('#1', text='Mã')
-        tree.heading('#2', text='Ngày')
-        tree.heading('#3', text='Thời gian vào')
-        tree.heading('#4', text='Thời gian ra')
-        tree.heading('#5', text='Tình trạng')
+        # Tạo bảng Treeview cho ca làm
+        columns = ('Mã Ca', 'Ngày', 'Thời gian vào', 'Thời gian ra', 'Tình trạng')
 
-        tree.column('#1', width=100, anchor='center')
-        tree.column('#2', width=100, anchor='center')
-        tree.column('#3', width=100, anchor='center')
-        tree.column('#4', width=100, anchor='center')
-        tree.column('#5', width=100, anchor='center')
+        self.tree = ttk.Treeview(right_panel, columns=columns, show='headings', height=10)
+        self.tree.heading('Mã Ca', text='Mã Ca')
+        self.tree.heading('Ngày', text='Ngày')
+        self.tree.heading('Thời gian vào', text='Thời gian vào')
+        self.tree.heading('Thời gian ra', text='Thời gian ra')
+        self.tree.heading('Tình trạng', text='Tình trạng')
 
-        # Kẻ đường viền cho bảng
-        style = ttk.Style()
-        style.configure("Treeview.Heading", font=("Helvetica", 10, "bold"))  # Định dạng tiêu đề
-        style.configure("Treeview", rowheight=25)  # Chiều cao mỗi hàng
+        self.tree.column('Mã Ca', width=100, anchor='center')
+        self.tree.column('Ngày', width=100, anchor='center')
+        self.tree.column('Thời gian vào', width=120, anchor='center')
+        self.tree.column('Thời gian ra', width=120, anchor='center')
+        self.tree.column('Tình trạng', width=120, anchor='center')
 
-        # Dữ liệu mẫu
-        data = [
-            ('bcc','12/10/2023', '08:00', '17:00', 'đi trễ'),
-            ('bcc', '13/10/2023', '08:10', '17:05', 'đúng giờ'),
-            ('bcc','14/10/2023', '08:05', '16:55', 'về sớm')
-        ]
+        self.tree.pack(pady=10)
 
-        # Chèn dữ liệu vào bảng
-        for row in data:
-            tree.insert('', tk.END, values=row)
+    def render_table(self, ds_calam):
+        """ Hiển thị dữ liệu vào bảng Treeview """
+        for row in self.tree.get_children():
+            self.tree.delete(row)
+        for item in ds_calam:
+            self.tree.insert('', 'end', values=item)
 
-        tree.pack(pady=(0, 20), padx=30, fill='both', expand=True)  # Thêm khoảng cách
+    def on_edit_button_click(self):
+        """ Sự kiện khi nhấn nút Sửa """
+        selected_item = self.tree.selection()
+        if selected_item:
+            maca = self.maca_entry.get()
+            ngay = self.ngay_entry.get_date()  # Lấy ngày từ DateEntry
+            tgvao = self.tgvao_entry.get()
+            tgra = self.tgra_entry.get()
+            tt = self.tt_entry.get()
 
-        # Time input fields
-        time_in_label = tk.Label(right_panel, text="Thời gian vào:", bg="white")
-        time_in_label.pack(pady=5)
-        time_in_entry = tk.Entry(right_panel, width=20, bg='#E5E5E5')
-        time_in_entry.pack(pady=5)
+            if maca and ngay and tgvao and tgra and tt:
+                # Tạo đối tượng LsccDTO với dữ liệu mới
+                updated_shift = LsccDTO(maca, ngay, tgvao, tgra, tt)
+                
+                # Cập nhật ca làm thông qua BUS
+                self.lich_su_bus.update_shift(selected_item[0], updated_shift)
+                
+                # Cập nhật lại danh sách lịch sử chấm công và làm mới bảng
+                self.ds_lichsu = self.lich_su_bus.getall()
+                self.render_table(self.ds_lichsu)
+                
+                messagebox.showinfo("Thông báo", "Cập nhật ca làm thành công!")
+            else:
+                messagebox.showwarning("Cảnh báo", "Vui lòng điền đầy đủ thông tin!")
+        else:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn một ca làm để sửa!")
 
-        time_out_label = tk.Label(right_panel, text="Thời gian ra:", bg="white")
-        time_out_label.pack(pady=5)
-        time_out_entry = tk.Entry(right_panel, width=20, bg='#E5E5E5')
-        time_out_entry.pack(pady=5)
-
-        # Edit button
-        edit_button = tk.Button(right_panel, text="Sửa", width=10)
-        edit_button.pack(pady=20)
-
-
-        # Chạy ứng dụng
-        root.mainloop()
-        
-if __name__ == '__main__':
-    LichSuChamCongGUI()
+if __name__ == "__main__":
+    ShiftGUI()
