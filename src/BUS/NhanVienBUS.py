@@ -18,6 +18,10 @@ class NhanVienBUS:
     def getInstance():
         return NhanVienBUS()
     
+    def getById(self, id):
+        employee_dao = NhanVienDAO.getInstance()
+        return employee_dao.TimKiem_Theo_Ma(id)
+    
     def list(self):
         employee_dao = NhanVienDAO.getInstance()
         danh_sach_nv = employee_dao.list()
@@ -40,13 +44,18 @@ class NhanVienBUS:
         check = nv_dao.update(nv)
         noti = "Sửa Thành Công" if check == 1 else "Sửa Thất Bại, mã không tồn tại"
         return noti
+  
+    def TimKiem_Theo_MaNhanVien(self, Ma):
+        dto = NhanVienDAO.getInstance().TimKiem_Theo_Ma(Ma)
+        return dto
+    
+    def TimKiem_Theo_Anh(self, Anh):
+        dto = NhanVienDAO.getInstance().TimKiem_Theo_Anh(Anh)
+        return dto
+
 def test():
-    nv_bus = NhanVienBUS.getInstance()
-    # nv_bus.list()
-    # nv_bus.delete('nv002')
-    nv = NhanVienDTO("'hell0aaaáao1ss11'", "Trần Thị B", "2000-01-28", "Nữ","12 An Dương Vương", "0285314097","Nhân Viên","anh1.png", True)
-    nv_bus.insert(nv)
+    ten = NhanVienBUS.getInstance().TimKiem_Theo_Anh("NV001.png")
 
 if __name__ == "__main__":
-    # test()
-    pass
+    test()
+    # pass

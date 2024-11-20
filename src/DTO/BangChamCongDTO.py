@@ -68,5 +68,5 @@ class BangChamCongDTO:
         print(f"Trạng Thái Xóa: {'Đã Xóa' if self.get_deleteStatus() else 'Hoạt Động'}")
 
 # Ví dụ sử dụng
-bang_cham_cong = BangChamCongDTO("BCC001", "08:00:00", "17:00:00", "2024-10-21", "Đi làm", "NV001", False)
-bang_cham_cong.display_info()
+# bang_cham_cong = BangChamCongDTO("BCC001", "08:00:00", "17:00:00", "2024-10-21", "Đi làm", "NV001", False)
+# bang_cham_cong.display_info()

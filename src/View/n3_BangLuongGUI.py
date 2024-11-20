@@ -1,22 +1,51 @@
 import tkinter as tk
 import utilView
-import customtkinter as ctk
-from tkinter import ttk
+import customtkinter as ctk 
+
+from  customtkinter import CTkImage 
+from tkinter import ttk, messagebox
 from time import strftime
 from PIL import Image, ImageTk
-import os
+import os, sys
+from datetime import datetime
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dto_dir = os.path.join(current_dir, '../DTO')
+sys.path.append(dto_dir)
+from BangLuongDTO import BangLuongDTO
+
+
+bus_dir = os.path.join(current_dir, '../BUS')
+sys.path.append(bus_dir)
+from BangLuongBUS import BangLuongBUS
+from BangChamCongBUS import BangChamCongBUS
+from NhanVienBUS import NhanVienBUS
+
+
 
 class BangLuongGUI:
     def __init__(self):
         # Đường dẫn đến folder Icon
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.icon_dir = os.path.join(current_dir, '../Icon')
-        
+
+        self.bangluong_bus=BangLuongBUS.getInstance()
+        self.is_view_detail=False
+
+
+
         self.initUI()
+        self.getData()
+        self.salaryWindow.mainloop()
+
+
+
     def back_Trang_Chu(self, window):
         window.destroy()
         from n1_TrangChuGUI import TrangChuGUI
         TrangChuGUI()
+    
     def enter_label(self, label, anhGoc, title):
         label.config(image=anhGoc)
         if title is not None:
@@ -30,13 +59,43 @@ class BangLuongGUI:
     def hover(self, label, anhGoc, anhHover, title):
         label.bind("<Enter>", lambda event: self.enter_label(label, anhHover, title))
         label.bind("<Leave>", lambda event: self.leave_label(label, anhGoc, title))
-          
+
+    def render_salary_list(self, salary_list):
+        # Xóa tất cả các hàng hiện có trong bảng
+        for item in self.salary_table.get_children():
+            self.salary_table.delete(item)
+
+        # Thêm dữ liệu mới từ salary_list vào bảng
+        if not salary_list: return
+
+
+        for i, salary in enumerate(salary_list, start=1):
+            # Giả sử salary là một dictionary chứa các trường như dưới đây
+            manv=salary.get_MaNhanVien()
+            tennv=NhanVienBUS.getInstance().getById(salary.get_MaNhanVien()).get_Ten()
+            sogio=self.calculate_total_hours_minutes(salary.get_MaNhanVien(), self.month_cb.get(), self.year_cb.get())
+            hsluong=salary.get_HeSoLuong()
+            phucap=salary.get_PhuCap()
+            khautru=salary.get_KhauTru()
+
+            self.salary_table.insert('', 'end', values=(
+                f"{i}",  # STT với padding
+                f"{manv}",
+                f"{tennv}",
+                f"{sogio}", 
+                f"{hsluong}", 
+                f"{phucap}",
+                f"{khautru}",
+                f"{self.calc_tongluong(sogio=sogio, hesoluong=hsluong, phucap=phucap, khautru=khautru)}"
+                # f"{salary.get_TongTien()}"
+        ))
+
     def initUI(self):
-        salaryWindow = tk.Tk()
+        self.salaryWindow = tk.Tk()
         wWindow = 1000
         hWindow = 650
-        salaryWindow.geometry(f"{wWindow}x{hWindow}+250+40")
-        frameSalary = utilView.frameUtil(salaryWindow, wWindow, hWindow, 0, 0, bg = '#ffffff')
+        self.salaryWindow.geometry(f"{wWindow}x{hWindow}+250+40")
+        frameSalary = utilView.frameUtil(self.salaryWindow, wWindow, hWindow, 0, 0, bg = '#ffffff')
         
         # Tạo frame cho header
         headerSalary = tk.Frame(frameSalary, width=1000, height=40, bg="white")
@@ -54,7 +113,7 @@ class BangLuongGUI:
         label_home = tk.Label(frameSalary, image=tk_homeImage, bg='white')
         label_home.image = tk_homeImage
         label_home.place(x=30, y=10)
-        label_home.bind("<Button-1>", lambda event: self.back_Trang_Chu(salaryWindow))
+        label_home.bind("<Button-1>", lambda event: self.back_Trang_Chu(self.salaryWindow))
         self.hover(label_home, tk_homeImage, tk_homeImageHover, None)
 
         body_height = hWindow - 60 - 180 - 10  # -60:header -180:footer - 10:paddingBody = 400
@@ -65,22 +124,25 @@ class BangLuongGUI:
 
 
         # Phần trên của body: Chọn tháng và năm
-        select_frame = tk.Frame(body, width=340, height=40, bg="#fff")
+        select_frame = tk.Frame(body, width=390, height=40, bg="#fff")
         select_frame.pack(pady=(0,10), anchor="e")
         select_frame.pack_propagate(False)
 
         # Chọn tháng
         tk.Label(select_frame, text="Chọn tháng:",font=("Arial", 11), bg="#fff").pack(side="left", padx=(0, 5))
-        month_cb = ttk.Combobox(select_frame, values=[str(i) for i in range(1, 13)], width=5, font=("Arial", 11))
-        month_cb.pack(side="left")
-        month_cb.set("1")  # Giá trị mặc định là tháng 1
-
+        self.month_cb = ttk.Combobox(select_frame, values=[str(i) for i in range(1, 13)], width=5, font=("Arial", 11), state="readonly")
+        self.month_cb.pack(side="left")
+        # Lấy tháng hiện tại
+        current_month = datetime.now().month - 1
+        self.month_cb.set(str(current_month))  # Thiết lập giá trị mặc định là tháng trước
 
         # Chọn năm
         tk.Label(select_frame, text="/", bg="#fff").pack(side="left", padx=2)
-        year_cb = ttk.Combobox(select_frame, values=[str(i) for i in range(1999, 2031)], width=5, font=("Arial", 11))
-        year_cb.pack(side="left")
-        year_cb.set("2024")  # Giá trị mặc định là năm 2024
+        self.year_cb = ttk.Combobox(select_frame, values=[str(i) for i in range(1999, 2031)], width=5, font=("Arial", 11), state="readonly")
+        self.year_cb.pack(side="left")
+        # Lấy năm hiện tại 
+        current_year = datetime.now().year
+        self.year_cb.set(str(current_year))  # Thiết lập giá trị mặc định là năm hiện tại
        
         # Nút Xem lương với các yêu cầu đặc biệt
         view_button = ctk.CTkButton(
@@ -93,9 +155,26 @@ class BangLuongGUI:
             font=("Arial", 12),  # Font chữ
             corner_radius=4,  # Bo góc 4px
             border_width=0,  # Không có viền
-            hover_color="#383838"
+            hover_color="#383838",
+            command=self.view_salary
         )
+        refreshIcon = Image.open(os.path.join(self.icon_dir, "reload.png"))
+        tk_refreshIcon = CTkImage(refreshIcon)
+        refresh_button = ctk.CTkButton(
+            select_frame, 
+            image=tk_refreshIcon, 
+            text="", 
+            width=50, 
+            height=24, 
+            fg_color="#fff",  # Màu nền
+            corner_radius=4,  # Bo góc 4px
+            border_width=1,  # Không có viền
+            hover_color="#d4d0c7",
+            command=self.refresh
+        )
+        
         view_button.pack(side="left", padx=(10,0))
+        refresh_button.pack(side="left", padx=(10,0))
 
 
 
@@ -105,33 +184,38 @@ class BangLuongGUI:
         table_frame.pack(fill='both',expand=True)
 
         # Tạo bảng lương với Treeview
-        columns = ("stt",'ma_nv','ten_nv','heso_luong','phu_cap','khau_tru','tong_luong',)
-        salary_table = ttk.Treeview(table_frame, columns=columns, show='headings')
-        salary_table.pack(fill='both',expand=True)
+        columns = ("stt",'ma_nv','ten_nv','so_gio','heso_luong','phu_cap','khau_tru','tong_luong',)
+        self.salary_table = ttk.Treeview(table_frame, columns=columns, show='headings')
+        self.salary_table.pack(fill='both',expand=True)
 
         # Đặt tên cột
-        salary_table.heading('stt', text='STT')
-        salary_table.heading('ma_nv', text='#ID')
-        salary_table.heading('ten_nv', text='Họ tên')
-        salary_table.heading('heso_luong', text='Hệ số lương')
-        salary_table.heading('phu_cap', text='Phụ cấp')
-        salary_table.heading('khau_tru', text='Khấu trừ')
-        salary_table.heading('tong_luong', text='Tổng lương')
+        self.salary_table.heading('stt', text='STT')
+        self.salary_table.heading('ma_nv', text='ID')
+        self.salary_table.heading('ten_nv', text='Họ tên')
+        self.salary_table.heading('so_gio', text='Số giờ')
+        self.salary_table.heading('heso_luong', text='Hệ số lương')
+        self.salary_table.heading('phu_cap', text='Phụ cấp')
+        self.salary_table.heading('khau_tru', text='Khấu trừ')
+        self.salary_table.heading('tong_luong', text='Tổng lương')
 
         # Đặt chiều rộng các cột
         total_width = 980  # Tổng chiều rộng của bảng
         # Tính toán kích thước cho các cột
-        width_span_1 = total_width // 23  # Cột có span 1
+        width_span_1 = total_width // 27  # Cột có span 1
         width_span_2 = width_span_1 * 2  # Cột có span 5
         width_span_4 = width_span_1 * 4  # Cột có span 4
 
-        salary_table.column('stt', width=width_span_1)
-        salary_table.column('ma_nv', width=width_span_2)
-        salary_table.column('ten_nv', width=width_span_4)
-        salary_table.column('heso_luong', width=width_span_4)
-        salary_table.column('phu_cap', width=width_span_4)
-        salary_table.column('khau_tru', width=width_span_4)
-        salary_table.column('tong_luong', width=width_span_4)
+        self.salary_table.column('stt', width=width_span_1)
+        self.salary_table.column('ma_nv', width=width_span_2)
+        self.salary_table.column('ten_nv', width=width_span_4)
+        self.salary_table.column('so_gio', width=width_span_4)
+        self.salary_table.column('heso_luong', width=width_span_4)
+        self.salary_table.column('phu_cap', width=width_span_4)
+        self.salary_table.column('khau_tru', width=width_span_4)
+        self.salary_table.column('tong_luong', width=width_span_4)
+
+          # Thêm sự kiện nhấp đúp
+        self.salary_table.bind("<Double-1>", self.on_double_click)
 
         
 
@@ -152,18 +236,19 @@ class BangLuongGUI:
         left_footer_frame.pack(side="left", fill='both')  # Chiếm hết phần còn lại của footer
         left_footer_frame.pack_propagate(False)
 
-        input1 = utilView.create_input_with_label(left_footer_frame, "ID", 0, 0)
-        input2 = utilView.create_input_with_label(left_footer_frame, "Họ tên", 0, 1)
-        input3 = utilView.create_input_with_label(left_footer_frame, "Hệ số lương", 1, 0)
-        input4 = utilView.create_input_with_label(left_footer_frame, "Phụ cấp", 1, 1)
-        input5 = utilView.create_input_with_label(left_footer_frame, "Khấu trừ", 2, 0)
-        input6 = utilView.create_input_with_label(left_footer_frame, "Tổng lương", 2, 1)
+        self.inp_id = utilView.create_input_with_label(left_footer_frame, "ID", 0, 0)
+        self.inp_ten = utilView.create_input_with_label(left_footer_frame, "Họ tên", 0, 1)
+        self.inp_sogio = utilView.create_input_with_label(left_footer_frame, "Số giờ", 1, 0)
+        self.inp_hsl = utilView.create_input_with_label(left_footer_frame, "Hệ số lương", 1, 1)
+        self.inp_phucap = utilView.create_input_with_label(left_footer_frame, "Phụ cấp", 2, 0)
+        self.inp_khautru = utilView.create_input_with_label(left_footer_frame, "Khấu trừ", 2, 1)
+        self.inp_tong = utilView.create_input_with_label(left_footer_frame, "Tổng lương", 3, 0)
         
         # Cấu hình cột để chúng giãn đều
         left_footer_frame.grid_columnconfigure(0, weight=1)
         left_footer_frame.grid_columnconfigure(1, weight=1)
 
-
+      
 
 
 
@@ -204,15 +289,166 @@ class BangLuongGUI:
             border_width=0,  # Không có viền
             hover_color="#383838"
         )
+        reset_button = ctk.CTkButton(
+            right_footer_frame, 
+            text="Reset", width=160, height=30,
+            fg_color="#000",  # Màu nền
+            text_color="#fff",  # Màu chữ
+            font=("Arial", 12, "bold"),  # Font chữ
+            corner_radius=4,  # Bo góc 4px
+            border_width=0,  # Không có viền
+            hover_color="#383838",
+            command=self.reset
+        )
 
         # Đặt các nút theo chiều dọc
         add_button.pack(pady=(10, 5))  # Khoảng cách phía trên là 10, phía dưới là 5
         edit_button.pack(pady=5)       # Khoảng cách đều nhau giữa các nút
         delete_button.pack(pady=5)
+        reset_button.pack(pady=5)
+
+    def getData(self):
+        self.salary_list=self.bangluong_bus.getByDate(self.month_cb.get(), self.year_cb.get())
+        self.render_salary_list(self.salary_list)
+
+    
+    def view_salary(self):
+        self.is_view_detail=False
+        
+        ngay_hien_tai = datetime.now()
+        thang_hien_tai = ngay_hien_tai.month
+        nam_hien_tai = ngay_hien_tai.year
+        
+        # Tách lấy tháng và năm từ ngày được chọn
+        thang_chon =int (self.month_cb.get())
+        nam_chon = int (self.year_cb.get())
+        
+        # Kiểm tra điều kiện
+        if nam_chon > nam_hien_tai or (nam_chon == nam_hien_tai and thang_chon >= thang_hien_tai):
+            messagebox.showinfo("Thông báo", "Bảng lương không tồn tại")
+            # Xóa tất cả các hàng hiện có trong bảng
+            for item in self.salary_table.get_children():
+                self.salary_table.delete(item)
+            return
+        
+        self.getData()
+
+    def on_double_click(self, event):
+        # Lấy item được chọn khi nhấp đúp
+        selected_item = self.salary_table.selection()
+        if selected_item:
+            # set state
+            self.is_view_detail=True
+
+            # Lấy dữ liệu của hàng đã chọn
+            item_values = self.salary_table.item(selected_item, "values")
+            self.show_value_input(item_values)
 
 
+    def show_value_input(self, values):
+        self.reset()
+        
+        self.inp_id.insert(0, values[1])  # Gán giá trị mới
+        self.inp_id.configure(state='readonly') 
 
-        salaryWindow.mainloop()
+        self.inp_ten.insert(0, values[2])  # Gán giá trị mới
+        self.inp_ten.configure(state='readonly') 
+
+        self.inp_sogio.insert(0, values[3])  # Gán giá trị mới
+        self.inp_sogio.configure(state='readonly') 
+        
+        self.inp_hsl.insert(0, values[4])  # Gán giá trị mới
+        self.inp_hsl.configure(state='readonly') 
+        
+        self.inp_phucap.insert(0, values[5])  # Gán giá trị mới
+        
+        self.inp_khautru.insert(0, values[6])  # Gán giá trị mới
+        
+        self.inp_tong.insert(0, values[7])  # Gán giá trị mới
+        self.inp_tong.configure(state='readonly') 
+
+
+    def reset(self):
+        self.is_view_detail=False
+
+        self.inp_id.configure(state='normal') 
+        self.inp_id.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+
+        self.inp_ten.configure(state='normal') 
+        self.inp_ten.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+       
+        self.inp_hsl.configure(state='normal')   
+        self.inp_hsl.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+
+        self.inp_sogio.configure(state='normal') 
+        self.inp_sogio.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        
+        self.inp_phucap.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        
+        self.inp_khautru.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        
+        self.inp_tong.configure(state='normal') 
+        self.inp_tong.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+
+        self.salaryWindow.focus_set() 
+
+    def refresh(self):
+        self.reset()
+        # Lấy tháng hiện tại
+        current_month = datetime.now().month - 1
+        self.month_cb.set(str(current_month))  # Thiết lập giá trị mặc định là tháng trươzxc
+        # Lấy năm hiện tại
+        current_year = datetime.now().year
+        self.year_cb.set(str(current_year))  # Thiết lập giá trị mặc định là tháng hiện tại
+        self.getData()
+
+    def calc_tongluong(self, sogio, hesoluong, phucap, khautru ):
+        luong_co_ban = 24000
+        return round(sogio * float(hesoluong) * float(luong_co_ban) + float(phucap) - float(khautru), 2)
+
+    
+    
+    def calculate_total_hours_minutes(self, ma_nhan_vien, thang, nam):
+        total_seconds = 0
+        cong_bus = BangChamCongBUS.getInstance()
+
+        bang_cham_cong_list = cong_bus.getSoGioNV(ma_nhan_vien, thang, nam)
+        if not bang_cham_cong_list:
+            return 0.0  # Trả về 0.0 nếu không có dữ liệu
+        
+        for cham_cong in bang_cham_cong_list:
+            # Kiểm tra mã nhân viên và tháng, năm
+            if cham_cong.get_MaNhanVien() == ma_nhan_vien:
+                # Lấy tháng và năm từ Ngay
+                ngay = cham_cong.get_Ngay()
+                
+                if ngay.month == int(thang) and ngay.year == int(nam):
+                    # Kiểm tra thời gian vào và ra
+                    if cham_cong.get_ThoiGianVao() and cham_cong.get_ThoiGianRa():
+                        time_in = cham_cong.get_ThoiGianVao()
+                        time_out = cham_cong.get_ThoiGianRa()
+                        # Kết hợp thời gian vào và ra với ngày
+                        datetime_in = datetime.combine(ngay, time_in)
+                        datetime_out = datetime.combine(ngay, time_out)
+
+                        # Tính khoảng cách giữa thời gian vào và ra
+                        delta = datetime_out - datetime_in
+                        total_seconds += delta.total_seconds()
+        
+        # Tính tổng số giờ dưới dạng số thực
+        total_hours = total_seconds / 3600
+
+        # Tính giờ và phút từ tổng giây
+        # total_hours_1 = int(total_seconds // 3600)
+        # total_minutes_1 = int((total_seconds % 3600) // 60)
+        # print( total_hours_1, total_minutes_1)
+
+        # print(total_hours)
+        return total_hours
+
+
 
 if __name__ == "__main__":
     bang_luong = BangLuongGUI()
+
+

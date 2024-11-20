@@ -7,6 +7,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 dto_dir = os.path.join(current_dir, '../DTO')
 sys.path.append(dto_dir)
 from NhanVienDTO import NhanVienDTO
+from BangChamCongDTO import BangChamCongDTO
 
 class NhanVienDAO:
     def __init__(self):
@@ -123,6 +124,39 @@ class NhanVienDAO:
         except pyodbc.Error as e:
             print("Lỗi khi tìm kiếm nhân viên:")
             return None
+    
+    def TimKiem_Theo_Anh(self, Anh):
+        con = self.connection.getConnection()
+        cursor = con.cursor()
+        
+        # Truy vấn tìm kiếm theo MaNhanVien
+        query = "SELECT MaNhanVien, Ten, NgaySinh, GioiTinh, DiaChi, SDT, ChucVu, HinhAnh, Status FROM NhanVien WHERE HinhAnh=?"
+        
+        try:
+            cursor.execute(query, Anh)
+            result = cursor.fetchone()  # Lấy kết quả đầu tiên
+            
+            if result:
+                # Gán kết quả truy vấn vào đối tượng NhanVienDTO
+                nhan_vien = NhanVienDTO(
+                    MaNhanVien=result[0],  # Mã nhân viên
+                    Ten=result[1],          # Tên nhân viên
+                    NgaySinh=result[2],      # Ngày sinh
+                    GioiTinh=result[3],      # Giới tính
+                    DiaChi=result[4],        # Địa chỉ
+                    SDT=result[5],           # Số điện thoại
+                    ChucVu=result[6],        # Chức vụ
+                    HinhAnh=result[7],       # Hình ảnh
+                    Status=result[8]         # Trạng thái xóa
+                )
+                return nhan_vien  # Trả về đối tượng NhanVienDTO
+            else:
+                print(f"Không tìm thấy nhân viên với Ảnh: {Anh}")
+                return None  # Trả về None nếu không tìm thấy
+
+        except pyodbc.Error as e:
+            print("Lỗi khi tìm kiếm nhân viên:")
+            return None
         
     def list(self):
         con = self.connection.getConnection()
@@ -210,38 +244,87 @@ class NhanVienDAO:
             return result[0]
         else:
             return 0
+     
+    ##########################################################
+    ################### BẢNG CHẤM CÔNG #######################
+    def tao_BangChamCong(self):
+        con = self.connection.getConnection()
+        cursor = con.cursor()
+        cursor.execute('select count(*) FROM BangChamCong')
+        ma = None
+        result = cursor.fetchone()
+        if result:
+            ma = result[0] + 1 
         
+        if ma < 10:
+            ma = 'BCC00'+ str(ma) 
+        elif ma < 100 and ma > 9:
+            ma = 'BCC0'+ str(ma)
+        else:
+            ma = 'BCC'+ str(ma) 
+            
+        return ma  
+    
+    def insert_BangChamCong(self, cc):
+        con = self.connection.getConnection()
+        cursor = con.cursor()
+        insert_query = '''
+        IF NOT EXISTS (
+            SELECT 1 FROM BangChamCong WHERE MaNhanVien = ? AND Ngay = ?
+        )
+        Begin
+            INSERT INTO BangChamCong(MaBCC, ThoiGianVao, ThoiGianRa, Ngay, TinhTrang, MaNhanVien, Status) VALUES (?, ?, ?, ?, ?, ?, ?)
+        end
+        '''
+        employee_data = (
+            cc.get_MaNhanVien(), cc.get_Ngay(),
+            cc.get_MaBCC(), cc.get_ThoiGianVao(), cc.get_ThoiGianRa(), 
+            cc.get_Ngay(), cc.get_TinhTrang(), cc.get_MaNhanVien(), cc.get_deleteStatus())
+        try:
+            cursor.execute(insert_query, employee_data)
+            con.commit()
+            if cursor.rowcount > 0:  # Kiểm tra số dòng bị ảnh hưởng bởi câu lệnh SQL
+                    print("Thêm bảng chấm công thành công")
+                    return 1
+            else:
+                    print("Thêm bảng chấm công thất bại")
+                    con.rollback()
+                    return 0
+        except Exception as e:
+            print("Thêm bảng chấm công thất bại except")
+            con.rollback()
+            return 0
+        
+    def update_BangChamCong_checkOut(self, ThoiGianRa, MaNhanVien):
+        con = self.connection.getConnection()
+        cursor = con.cursor()
+        insert_query = '''
+            update BangChamCong
+            set ThoiGianRa = ?
+            where MaNhanVien = ? and ThoiGianRa = ThoiGianVao
+        '''
+        employee_data = (ThoiGianRa, MaNhanVien)
+        try:
+            cursor.execute(insert_query, employee_data)
+            con.commit()
+            if cursor.rowcount > 0:  # Kiểm tra số dòng bị ảnh hưởng bởi câu lệnh SQL
+                    print("Update checkout bảng chấm công thành công")
+                    return 1
+            else:
+                    print("Update checkout bảng chấm công thất bại")
+                    con.rollback()
+                    return 0
+        except Exception as e:
+            print("Update checkout bảng chấm công thất bại except")
+            con.rollback()
+            return 0
+    
 def test():
-    employee_dao = NhanVienDAO.getInstance()
-    # print(employee_dao.tao_MaNhanVien())
-    tk = employee_dao.CoTaiKhoanChua("NV001")
-    if tk == 0:
-        print("no")
-        
-    else:
-        print(tk)
-        
-    ## insert
-    # employeeInsert = NhanVienDTO("NV001", "Nguyễn Văn A", "1990-01-01", "Nam", "123 Đường A", "0900123456", "Quản lý", "anh.png",True)
-    # employee_dao.insert(employeeInsert)
+    bang_cham_cong = BangChamCongDTO("BCC001", "08:00:00", "17:00:00", "2024-10-21", "Đi làm", "NV001", True)
+    # dao = NhanVienDAO.getInstance().insert_BangChamCong(bang_cham_cong)
+    dao = NhanVienDAO.getInstance().update_BangChamCong_checkOut("10:00:00", "NV001")
+    print(dao)
     
-    ## tìm theo mã
-    # nhanvien_timTheoMa = employee_dao.TimKiem_Theo_Ma("1")
-    # nhanvien_timTheoMa.display_info()
-    
-    ## Update
-    # nhanvienUpdate = NhanVienDTO("NV002", "Trần Thị B", "2000-01-28", "Nữ","12 An Dương Vương", "0285314097","Nhân Viên","anh1.png", False)
-    # nhanvienUpdate.display_info()
-    # employee_dao.update(nhanvienUpdate)
-    
-    ## delete = update = 0
-    # employee_dao.delete(employee)
-    
-    ## list
-    # danh_sach_nv = employee_dao.list()
-    # for i in danh_sach_nv:
-    #     i.display_info()
-    #     print("\n")
 
 if __name__ == "__main__":
     test()

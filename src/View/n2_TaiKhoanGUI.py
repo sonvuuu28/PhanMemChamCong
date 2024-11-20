@@ -28,6 +28,7 @@ class TaiKhoanGUI:
     
     def __init__(self, parent_window, MaNhanVien):
         print("TaiKhoanGUI")
+        self.TenNhanVien = MaNhanVien.get_Ten()
         self.MaNhanVien = MaNhanVien.get_MaNhanVien()
         print(self.MaNhanVien)
         self.ChucVu = MaNhanVien.get_ChucVu()
@@ -101,11 +102,19 @@ class TaiKhoanGUI:
         hWindow = 380
         window.geometry(f"{wWindow}x{hWindow}+660+200")
         
-        window.overrideredirect(True)
+        # window.overrideredirect(True)
         frameNote = utilView.frameUtil(window, wWindow, hWindow, 0, 0, bg='#F2F2F2')
         
         # headerWindow
         headerWindow = utilView.frameUtil(frameNote, wWindow, 35, 0, 0, bg='#C1C1C1')
+        labelNote = tk.Label(headerWindow, text=self.TenNhanVien, bg="#C1C1C1", fg="#000000", font=("Arial", 12))
+        label_width = labelNote.winfo_reqwidth()  # Lấy chiều rộng của Label
+        label_height = labelNote.winfo_reqheight() 
+        x_center = (wWindow - label_width) // 2
+        y_center = (35 - label_height) // 2
+
+        # Đặt Label vào vị trí giữa
+        labelNote.place(x=x_center, y=y_center)
         
         ## Cột trường thông tin
         utilView.labelUtil(window,'Tài Khoản',100, 70, bg='#F2F2F2', font=("Arial", 14))
@@ -124,13 +133,13 @@ class TaiKhoanGUI:
         self.MatKhau = utilView.entryUtil(window,'',xTextField, 222, 18, bg='#ffffff', show = "*")
         
         ## Nút Tạo, Sửa
-        self.BtnCapTk = utilView.cusButtonUtil(window, 'Cấp TK', xLabel,320,80,30, fg_color="#000000", hover_color="#383838",  command=lambda: self.CapTk())
-        self.BtnSua = utilView.cusButtonUtil(window, 'Sửa TK', xLabel + 140, 320, 80, 30, fg_color="#000000", hover_color="#383838",  command=lambda: self.Sua())
-        
-        # Tạo button với icon
-        close_icon = ImageTk.PhotoImage(file=os.path.join(self.icon_dir, "close.png"))  # Đường dẫn tương đối
-        close_button = tk.Button(headerWindow, image=close_icon, width=40, height=40, bg="#C1C1C1", borderwidth=0, highlightthickness=0, cursor="hand2", command=window.destroy)
-        close_button.place(x=260, y=0)
+        dto = TaiKhoanBUS.getInstance().TimKiem_Theo_MaNhanVien(self.MaNhanVien)
+        if dto is None:
+            self.BtnCapTk = utilView.cusButtonUtil(window, 'Cấp Tài Khoản', xLabel + 65, 320, 100,30, fg_color="#000000", hover_color="#383838",  command=lambda: self.CapTk())
+            # self.BtnSua = utilView.cusButtonUtil(window, 'Sửa TK', xLabel + 140, 320, 80, 30, fg_color="#000000", hover_color="#383838",  command=lambda: self.Sua())
+        else:
+            # self.BtnCapTk = utilView.cusButtonUtil(window, 'Cấp TK', xLabel,320,80,30, fg_color="#000000", hover_color="#383838",  command=lambda: self.CapTk())
+            self.BtnSua = utilView.cusButtonUtil(window, 'Sửa Tài Khoản', xLabel + 65, 320, 100, 30, fg_color="#000000", hover_color="#383838",  command=lambda: self.Sua())
         
         window.mainloop()
 

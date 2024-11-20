@@ -71,6 +71,7 @@ CREATE TABLE [BangLuong] (
   [TongTien] DECIMAL(10, 2) not null,
   [MaNhanVien] nvarchar(255),
   [Status] bit not null,
+  [sogiolam] DECIMAL(10, 2) not null,
   FOREIGN KEY ([MaNhanVien]) REFERENCES [NhanVien] ([MaNhanVien])
 )
 GO
@@ -91,3 +92,4 @@ drop table IF EXISTS PhanQuyen
 drop table IF EXISTS BangChamCong
 drop table IF EXISTS NhanVien
 */
+

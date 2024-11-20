@@ -6,6 +6,8 @@ from PIL import Image, ImageTk
 import os
 import sys
 from tkinter import messagebox
+import shutil
+from tkinter import filedialog, messagebox
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 dto_dir = os.path.join(current_dir, '../DTO')
@@ -38,7 +40,57 @@ class NhanVienGUI:
         self.ChucVu = None
         self.HinhAnh = None
         self.UI()
+    def on_item_selected(self, event):
+        selected_item = self.tree.selection()
+        if selected_item:
+            item_values = self.tree.item(selected_item[0])['values']
+
+            self.Ma.delete(0, tk.END)
+            self.Ma.insert(0, item_values[0])
+
+            self.Ten.delete(0, tk.END)
+            self.Ten.insert(0, item_values[1])
+
+            self.NgaySinh.delete(0, tk.END)
+            self.NgaySinh.insert(0, item_values[2])
+
+            self.GioiTinh.set(item_values[3])
+
+            self.DiaChi.delete(0, tk.END)
+            self.DiaChi.insert(0, item_values[4])
+
+            self.SDT.delete(0, tk.END)
+            self.SDT.insert(0,'0' +  str(item_values[5]))
+
+            self.ChucVu.set(item_values[6])
+
+            self.update_hinh_anh_entry(item_values[7])
+            
+    def chon_anh(self):
+        # Lấy đường dẫn thư mục gốc của dự án (dựa trên vị trí file hiện tại)
+        project_dir = os.path.dirname(os.path.abspath(__file__))
         
+        # Đường dẫn thư mục ảnh
+        source_folder = os.path.join(project_dir, "../../ImageEmployee")  # Điều chỉnh theo cấu trúc dự án
+
+        # Mở hộp thoại chọn file
+        file_path = filedialog.askopenfilename(
+            title="Chọn ảnh",
+            initialdir=source_folder,  # Thư mục mở mặc định
+            filetypes=[("Ảnh", "*.jpg;*.jpeg;*.png;*.bmp;*.gif")]
+        )
+
+        if file_path:  # Nếu người dùng chọn ảnh
+            # Lấy tên file gốc
+            file_name = os.path.basename(file_path)
+            self.HinhAnh.delete(0, 'end')  # Xóa nội dung cũ trong Entry
+            self.HinhAnh.insert(0, file_name)
+            self.update_hinh_anh_entry(file_name)
+            messagebox.showinfo("Thành công", f"Bạn đã chọn ảnh: {file_name}")
+        else:
+            # Hiển thị thông báo hủy bỏ
+            messagebox.showwarning("Hủy bỏ", "Bạn chưa chọn ảnh nào!")
+         
     def enter_label(self, label, anhGoc, title):
         label.config(image=anhGoc)
         if title is not None:
@@ -71,7 +123,13 @@ class NhanVienGUI:
                 messagebox.showinfo("Thông báo", "Mã nhân viên không tồn tại !")
                 print(e)
                 
-        
+    def update_hinh_anh_entry(self, value):
+        self.HinhAnh.configure(state="normal")  # Chuyển sang chế độ có thể chỉnh sửa
+        self.HinhAnh.delete(0, tk.END)         # Xóa nội dung cũ
+        self.HinhAnh.insert(0, value)         # Gán nội dung mới
+        self.HinhAnh.configure(state="readonly")  # Đặt lại chế độ readonly
+
+      
     def listBang(self):
         # Xóa tất cả các hàng hiện có trong bảng
         self.tree.delete(*self.tree.get_children())
@@ -98,6 +156,7 @@ class NhanVienGUI:
         ## check ngày sinh
         NgaySinh = self.NgaySinh.get()
         if utilView.convert_date_format(NgaySinh) == 0:
+            self.NgaySinh.focus_set()
             messagebox.showinfo("Thông báo", "Ngày sinh không hợp lệ !")
             return
         else:
@@ -105,6 +164,7 @@ class NhanVienGUI:
         ## check sdt
         SDT = self.SDT.get()
         if utilView.kiem_tra_so_dien_thoai(SDT) == False:
+            self.SDT.focus_set()
             messagebox.showinfo("Thông báo", "Số điện thoại không hợp lệ !")
             return
         else:
@@ -134,6 +194,7 @@ class NhanVienGUI:
         ## check ngày sinh
         NgaySinh = self.NgaySinh.get()
         if utilView.convert_date_format(NgaySinh) == 0:
+            self.NgaySinh.focus_set()
             messagebox.showinfo("Thông báo", "Ngày sinh không hợp lệ !")
             return
         else:
@@ -141,6 +202,7 @@ class NhanVienGUI:
         ## check sdt
         SDT = self.SDT.get()
         if utilView.kiem_tra_so_dien_thoai(SDT) == False:
+            self.SDT.focus_set()
             messagebox.showinfo("Thông báo", "Số điện thoại không hợp lệ !")
             return
         else:
@@ -167,7 +229,9 @@ class NhanVienGUI:
         self.NgaySinh.delete(0, 'end')
         self.DiaChi.delete(0, 'end')
         self.SDT.delete(0, 'end')
+        self.HinhAnh.configure(state="normal")
         self.HinhAnh.delete(0, 'end')
+        self.HinhAnh.configure(state="readonly") 
         self.listBang()
         
     def tao_MaNhanVien(self):
@@ -288,8 +352,10 @@ class NhanVienGUI:
         self.ChucVu.place(x = 120, y = 300)
         self.ChucVu.set("Nhân Viên")
         
-        self.HinhAnh = utilView.entryUtil(frameInput, '', 120, 340, 100)
-        utilView.lineUtil(frameInput, 60, 180, 360)
+        nutChonHinhAnh = utilView.cusButtonUtil(frameBiggest, '...', 270, 497, 25, 25, fg_color="#CDCDCD", hover_color="#7F7D7D", text_color="#000000", command=lambda: self.chon_anh())
+        self.HinhAnh = utilView.entryUtil(frameInput, '', 120, 340, 13, background="#e0e0e0",)
+        self.HinhAnh.configure(state="readonly")
+        utilView.lineUtil(frameInput, 60, 141, 360)
         
         style = ttk.Style()
         style.configure("Treeview.Heading", font=("Arial", 8, "bold"))
@@ -304,7 +370,7 @@ class NhanVienGUI:
         self.tree.heading("column5", text="Địa Chỉ")
         self.tree.heading("column6", text="Số Điện Thoại")
         self.tree.heading("column7", text="Chức Vụ")
-        self.tree.heading("column8", text="Hình Ảnh")
+        self.tree.heading("column8", text="Hình Ảnh") 
         
         self.tree.column("#0", width=50, anchor=tk.CENTER) 
         self.tree.column("column1", width=50, anchor=tk.W)  
@@ -315,7 +381,7 @@ class NhanVienGUI:
         self.tree.column("column6", width=100, anchor=tk.W)
         self.tree.column("column7", width=75, anchor=tk.W)
         self.tree.column("column8", width=75, anchor=tk.W)
-        
+        self.tree.bind("<<TreeviewSelect>>", self.on_item_selected)
         self.listBang()
         self.tree.place(x=380, y=150)
         

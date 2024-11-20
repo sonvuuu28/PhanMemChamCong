@@ -2,20 +2,57 @@ import tkinter as tk
 import utilView
 import customtkinter as ctk
 import datetime
-import random
+from n9_EditShiftModal import EditShiftModal
 from n6_AddShiftModal import AddShiftModal
+from  customtkinter import CTkImage 
 from tkcalendar import DateEntry
 from tkinter import ttk
 from tkinter import messagebox
 from PIL import ImageTk, Image
-import os
+import os, sys
+
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dto_dir = os.path.join(current_dir, '../DTO')
+sys.path.append(dto_dir)
+from CaLamDTO import CaLamDTO
+from NhanVienDTO import NhanVienDTO
+
+
+bus_dir = os.path.join(current_dir, '../BUS')
+sys.path.append(bus_dir)
+from CaLamBUS import CaLamBUS
+from LichLamBUS import LichLamBUS
+from NhanVienBUS import NhanVienBUS
+
+
 
 class LichLamViecGUI:
     def __init__(self):
         # Đường dẫn đến folder Icon
-        current_dir = os.path.dirname(os.path.abspath(__file__))
         self.icon_dir = os.path.join(current_dir, '../Icon')
+
+        self.cl_bus = CaLamBUS.getInstance()
+        self.ll_bus = LichLamBUS.getInstance()
+        
+        self.is_create_new_schedule = False
+        self.is_edit_schedule= False
+        self.schedule_list_build = None
+
         self.initUI()
+        
+        # init data
+        self.data_shifts = self.cl_bus.getall()
+        self.data_schedules = self.ll_bus.getallbydate(self.start_date.get_date(), self.end_date.get_date())
+
+        self.dataEdit = None
+
+        self.render_table_shift(self.data_shifts)    
+        self.render_table_schedule(self.data_schedules)
+
+        self.schedule_window.mainloop()
+
 
     def initUI(self):
         self.schedule_window = tk.Tk()
@@ -56,7 +93,7 @@ class LichLamViecGUI:
         top_frame.pack_propagate(False)
 
         # Phần trên của body: Chọn tháng và năm
-        select_frame = tk.Frame(top_frame, width=480, height=40, bg="#fff")
+        select_frame = tk.Frame(top_frame, width=530, height=40, bg="#fff")
         select_frame.pack(pady=(0,10), side="right")
         select_frame.pack_propagate(False)
         # Thay phần chọn ngày
@@ -84,8 +121,12 @@ class LichLamViecGUI:
                                   day=end_of_week.day, date_pattern='dd/mm/yyyy')
         self.end_date.pack(side="left", padx=10)
 
+        self.start_date.configure(state="readonly")
+        self.end_date.configure(state="readonly")
 
-        # Nút Xem lịch
+
+
+        # Nút Xem 
         view_button = ctk.CTkButton(
             select_frame, 
             text="Xem lịch", 
@@ -100,14 +141,27 @@ class LichLamViecGUI:
             command=self.show_selected_dates
            
         )
-        view_button.pack(side="left", padx=(10,0))
-
-
-        # Table bên dưới phần chọn tháng và năm
-        self.create_table(body)
-
-
+        # nút refreshh
+        refreshIcon = Image.open(os.path.join(self.icon_dir, "reload.png"))
+        tk_refreshIcon = CTkImage(refreshIcon)
+        refresh_button = ctk.CTkButton(
+            select_frame, 
+            image=tk_refreshIcon, 
+            text="", 
+            width=50, 
+            height=24, 
+            fg_color="#fff",  # Màu nền
+            corner_radius=4,  # Bo góc 4px
+            border_width=1,  # Không có viền
+            hover_color="#d4d0c7",
+            command=self.refresh
+        )
         
+        view_button.pack(side="left", padx=(10,0))
+        refresh_button.pack(side="left", padx=(10,0))
+
+        # Table lịch làm
+        self.create_table(body)
 
         # Tạo footer frame với kích thước 990x40 và paddingX=10
         footer = tk.Frame(
@@ -119,7 +173,6 @@ class LichLamViecGUI:
         )
         footer.pack(pady=(10, 0), padx=10, fill='x')  # Padding giữa footer và body là 10px
         footer.pack_propagate(False)
-
 
         # Frame bên trái của footer (phần còn lại của footer)
         left_footer_frame = tk.Frame(footer,width=780, bg="blue")
@@ -151,7 +204,7 @@ class LichLamViecGUI:
         )
         create_shift_btn = ctk.CTkButton(
             right_footer_frame, 
-            text="Tạo ca làm", width=160, height=30,
+            text="Quản lí ca làm", width=160, height=30,
             fg_color="#000",  # Màu nền
             text_color="#fff",  # Màu chữ
             font=("Arial", 12, "bold"),  # Font chữ
@@ -160,28 +213,30 @@ class LichLamViecGUI:
             hover_color="#383838",
             command= lambda : self.show_shift_window()
         )
-        # delete_button = ctk.CTkButton(
-        #     right_footer_frame, 
-        #     text="Xoá", width=160, height=30,
-        #     fg_color="#000",  # Màu nền
-        #     text_color="#fff",  # Màu chữ
-        #     font=("Arial", 12, "bold"),  # Font chữ
-        #     corner_radius=4,  # Bo góc 4px
-        #     border_width=0,  # Không có viền
-        #     hover_color="#383838"
-           
-        # )
+        edit_shift_btn = ctk.CTkButton(
+            right_footer_frame, 
+            text="Sửa ca làm", width=160, height=30,
+            fg_color="#000",  # Màu nền
+            text_color="#fff",  # Màu chữ
+            font=("Arial", 12, "bold"),  # Font chữ
+            corner_radius=4,  # Bo góc 4px
+            border_width=0,  # Không có viền
+            hover_color="#383838",
+            command= self.open_edit_shift_modal
+        )
+        
 
         # Đặt các nút theo chiều dọc
+        edit_shift_btn.pack(pady=(10, 5))  # Khoảng cách phía trên là 10, phía dưới là 5
         arrange_shift_btn.pack(pady=(10, 5))  # Khoảng cách phía trên là 10, phía dưới là 5
         create_shift_btn.pack(pady=5)       # Khoảng cách đều nhau giữa các nút
         # delete_button.pack(pady=5)
 
 
-        self.add_row_to_table(self.start_date.get_date())
-
-        self.schedule_window.mainloop()
         
+
+
+
     def enter_label(self, label, anhGoc, title):
         label.config(image=anhGoc)
         if title is not None:
@@ -207,23 +262,81 @@ class LichLamViecGUI:
         from n6_CaLamGUI import ShiftGUI
         ShiftGUI()
 
+    def on_double_click(self, event):
+        # Lấy item được chọn khi nhấp đúp
+        selected_item = self.table_schedule.selection()
+        if selected_item:
+            # set state
+
+            item_values = self.table_schedule.item(selected_item, "values")
+            if not item_values[0]: return
+
+            self.is_edit_schedule=True
+            self.dataEdit = item_values 
+
+    def refresh(self):
+        self.is_create_new_schedule = False
+        # Tính toán ngày bắt đầu và kết thúc của tuần hiện tại
+        today = datetime.date.today()
+        start_of_week = today - datetime.timedelta(days=today.weekday())  # Thứ 2 của tuần
+        end_of_week = start_of_week + datetime.timedelta(days=6)  # Chủ nhật của tuần
+
+        self.start_date.set_date(start_of_week)
+        self.end_date.set_date(end_of_week)
+
+        # init data
+        self.data_shifts = self.cl_bus.getall()
+        self.data_schedules = self.ll_bus.getallbydate(self.start_date.get_date(), self.end_date.get_date())
+
+
+        self.render_table_shift(self.data_shifts)    
+        self.render_table_schedule(self.data_schedules)
+
     def open_add_shift_modal(self):
-        AddShiftModal(self.schedule_window)
+        if not self.is_create_new_schedule: 
+            return
+        dataDate = (self.start_date, self.end_date)
+        AddShiftModal(self.schedule_window, self.table_schedule ,dataDate)
 
-    def add_sample_footer_rows(self):
-        """Thêm dữ liệu mẫu vào bảng của footer."""
-        shift_data = [
-            ("Ca 1", "09:00", "13:00"),
-            ("Ca 2", "13:00", "17:00"),
-            ("Ca 3", "17:00", "21:00")
-        ]
+    def open_edit_shift_modal(self):
+        if not self.is_edit_schedule: 
+            return
 
-        for shift in shift_data:
-            self.footer_table.insert("", "end", values=shift)
+        # Chuyển đổi thành dictionary
+        schedule_of_employee = {self.dataEdit[1]: list(self.dataEdit[2:])}
+
+        # EditShiftModal(self.schedule_window, self.dataEdit)
+        EditShiftModal(self.schedule_window, schedule_of_employee, self.schedule_list_build)
+        self.is_edit_schedule=False
+
+    def render_table_shift(self, data):
+        # Xóa tất cả các hàng hiện có trong bảng
+        for item in self.table_shift.get_children():
+            self.table_shift.delete(item)
+
+        # Thêm dữ liệu mới vào bảng
+        if not data or len(data) == 0: return
+
+
+        for i, shift in enumerate(data, start=1):
+            # Giả sử salary là một dictionary chứa các trường như dưới đây
+            maca=shift.get_MaCa()
+            tenca=shift.get_TenCa()
+            tgvao=shift.get_ThoiGianVao()
+            tgra=shift.get_ThoiGianRa()
+
+            self.table_shift.insert('', 'end', values=(
+                f"{maca}",
+                f"{tenca}",
+                f"{tgvao}", 
+                f"{tgra}" )
+            )
+
+        
     
     def create_footer_table(self, parent_frame):
         """Tạo bảng dưới phần left footer với thanh cuộn nếu vượt quá chiều cao."""
-        columns = ("Ca làm", "Thời gian vào", "Thời gian ra")
+        columns = ("maca","tenca", "tgvao", "tgra")
 
         # Tạo khung cho Treeview và Scrollbar
         table_frame = tk.Frame(parent_frame, width=780, height=170)
@@ -234,68 +347,83 @@ class LichLamViecGUI:
         scrollbar.pack(side='right', fill='y')
 
         # Tạo Treeview với các cột
-        self.footer_table = ttk.Treeview(table_frame, columns=columns, show="headings", height=7, yscrollcommand=scrollbar.set)
-        self.footer_table.pack(side='left', fill='both', expand=True)
+        self.table_shift = ttk.Treeview(table_frame, columns=columns, show="headings", height=7, yscrollcommand=scrollbar.set)
+        self.table_shift.pack(side='left', fill='both', expand=True)
 
         # Kết nối thanh cuộn với Treeview
-        scrollbar.config(command=self.footer_table.yview)
+        scrollbar.config(command=self.table_shift.yview)
 
         # Đặt tiêu đề cho các cột
-        self.footer_table.heading("Ca làm", text="Ca làm")
-        self.footer_table.heading("Thời gian vào", text="Thời gian vào")
-        self.footer_table.heading("Thời gian ra", text="Thời gian ra")
+        self.table_shift.heading("maca", text="Mã ca")
+        self.table_shift.heading("tenca", text="Ca làm")
+        self.table_shift.heading("tgvao", text="Thời gian vào")
+        self.table_shift.heading("tgra", text="Thời gian ra")
 
         # Đặt kích thước cột
-        self.footer_table.column("Ca làm", width=200, anchor='center')
-        self.footer_table.column("Thời gian vào", width=250, anchor='center')
-        self.footer_table.column("Thời gian ra", width=250, anchor='center')
+        self.table_shift.column("maca", width=60, anchor='center')
+        self.table_shift.column("tenca", width=140, anchor='center')
+        self.table_shift.column("tgvao", width=250, anchor='center')
+        self.table_shift.column("tgra", width=250, anchor='center')
 
-        # Thêm dữ liệu mẫu
-        self.add_sample_footer_rows()    
+       
 
     def show_selected_dates(self):
         """Xác thực ngày bắt đầu và ngày kết thúc."""
         start_date = self.start_date.get_date()
         end_date = self.end_date.get_date()
 
+
+        
         # Kiểm tra xem ngày bắt đầu có phải là thứ Hai không
         if start_date.weekday() != 0:  # 0 là thứ Hai
-            messagebox.showerror("Lỗi", "Ngày bắt đầu phải là thứ Hai.")
+            messagebox.showerror("Lỗi", "Ngày bắt đầu trong tuần phải là thứ Hai.")
             return
 
-        # Tính ngày Chủ Nhật của tuần kế tiếp
-        curr_sunday = start_date + datetime.timedelta(days=6)  # Chủ Nhật tuần hiện tại
+        # Tính ngày Chủ Nhật trong tuần
+        curr_sunday = start_date + datetime.timedelta(days=6)  
 
         # Nếu ngày kết thúc không phải là Chủ Nhật của tuần hiện tại
         if end_date != curr_sunday:
-            messagebox.showerror("Lỗi", "Ngày kết thúc phải là Chủ Nhật đứng sau gần nhất.")
+            messagebox.showerror("Lỗi", "Ngày kết thúc trong tuần phải là Chủ Nhật gần nhất.")
             return
-
-        # Nếu hợp lệ
-        today = datetime.date.today()
-        days_until_sunday = 6 - today.weekday()
-        now_sunday = today + datetime.timedelta(days=days_until_sunday)
         
+        # Nếu hợp lệ
+        
+        today = datetime.date.today()
+        days_until_sunday = 6 - today.weekday() # => còn bao nhiêu ngày nữa đến chủ nhật
+        now_sunday = today + datetime.timedelta(days=days_until_sunday)
         if start_date > now_sunday:
-             # Nếu bắt đầu từ tuần tiếp theo và kết thúc là Chủ Nhật của tuần kế tiếp
+            self.data_schedules = self.ll_bus.getallbydate(self.start_date.get_date(), self.end_date.get_date())
+            if self.data_schedules:
+                self.render_table_schedule(self.data_schedules)
+                messagebox.showinfo("Thông báo", "Lịch hiện tại là của tuần " + self.start_date.get_date().strftime("%d-%m-%Y") + " đến " + self.end_date.get_date().strftime("%d-%m-%Y"))
+
+                self.is_create_new_schedule = True
+                return
+
+            # Nếu ngày bắt đầu là thuộc tuần sau => tạo lịch cho tuần sau
             confirm = messagebox.askyesno(
                 "Xác nhận",
-                "Bạn có muốn tạo lịch cho tuần tiếp theo không?"
+                "Bạn có muốn tạo lịch làm việc mới cho tuần này không?"
             )
             if confirm:
+                self.is_create_new_schedule = True
                 # //todooo
                 messagebox.showinfo("Thông báo", f"Tạo lịch mới cho tuần sau")
                  # Xóa tất cả dữ liệu trong bảng trước khi thêm hàng mới
-                for item in self.table.get_children():
-                    self.table.delete(item)
+                for item in self.table_schedule.get_children():
+                    self.table_schedule.delete(item)
+                # Thêm hàng ngày tương ứng (t2-cn)
+                self.init_row_table_schedule(start_date)
                 return
             else:
+                self.refresh()
                 return  # Người dùng chọn "No", không làm gì cả
             
-        # Thêm hàng vào bảng
-        self.add_row_to_table(start_date)
+        
         # todooo call data
-        messagebox.showinfo("Thông báo", f"Xem lịch thời gian từ {start_date} đến {end_date} hợp lệ.")
+        self.data_schedules = self.ll_bus.getallbydate(self.start_date.get_date(), self.end_date.get_date())
+        self.render_table_schedule(self.data_schedules)
 
     def readonly_comboboxes(self):
         """Set các Combobox thành trạng thái 'readonly'."""
@@ -303,10 +431,10 @@ class LichLamViecGUI:
         self.year_cb.config(state="readonly")   # Tắt chức năng chọn năm
         self.date_range_cb.config(state="readonly")  # Tắt chức năng chọn khoảng thời gian
 
-    def add_row_to_table(self, start_date):
+    def init_row_table_schedule(self, start_date):
         # Xóa tất cả dữ liệu trong bảng trước khi thêm hàng mới
-        for item in self.table.get_children():
-            self.table.delete(item)
+        for item in self.table_schedule.get_children():
+            self.table_schedule.delete(item)
 
         """Thêm hàng đầu tiên vào bảng với các ngày từ thứ Hai đến Chủ Nhật."""
         days = [start_date + datetime.timedelta(days=i) for i in range(7)]  # Các ngày từ thứ Hai đến Chủ Nhật
@@ -314,14 +442,12 @@ class LichLamViecGUI:
 
         # Tạo dữ liệu hàng đầu tiên(ngày tương ứng thứ)
         row_data = ["", "", *day_strings]  # Dữ liệu cho hàng đầu tiên
-        self.table.insert("", "end", values=row_data)  # Thêm vào bảng
+        self.table_schedule.insert("", "end", values=row_data)  # Thêm vào bảng
         
-        # fake data
-        self.add_random_rows_to_table()
 
     def create_table(self, parent_frame):
         """Tạo bảng dưới phần select_frame với thanh cuộn nếu vượt quá chiều cao."""
-        columns = ("STT", "Nhân viên", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ nhật")
+        columns = ("stt", "nv", "t2", "t3", "t4", "t5", "t6", "t7", "cn")
 
         # Tạo khung cho Treeview và Scrollbar
         table_frame = tk.Frame(parent_frame)
@@ -332,11 +458,13 @@ class LichLamViecGUI:
         scrollbar.pack(side='right', fill='y')
 
         # Tạo Treeview với các cột
-        self.table = ttk.Treeview(table_frame, columns=columns, show="headings", height=10, yscrollcommand=scrollbar.set)
-        self.table.pack(side='left', fill='both', expand=True)
+        self.table_schedule = ttk.Treeview(table_frame, columns=columns, show="headings", height=10, yscrollcommand=scrollbar.set)
+        self.table_schedule.pack(side='left', fill='both', expand=True)
 
         # Kết nối thanh cuộn với Treeview
-        scrollbar.config(command=self.table.yview)
+        scrollbar.config(command=self.table_schedule.yview)
+          # Thêm sự kiện nhấp đúp
+        self.table_schedule.bind("<Double-1>", self.on_double_click)
 
         w = 980
         col_1 = 980 // 28
@@ -344,40 +472,65 @@ class LichLamViecGUI:
         col_3 = col_1 * 3
 
         # Đặt tiêu đề cho các cột
-        self.table.heading("STT", text="STT")
-        self.table.column("STT", width=col_1, anchor='center')  # STT chiếm 1 cột
+        self.table_schedule.heading("stt", text="STT")
+        self.table_schedule.column("stt", width=col_1, anchor='center')  # STT chiếm 1 cột
 
-        self.table.heading("Nhân viên", text="Nhân viên")
-        self.table.column("Nhân viên", width=col_5, anchor='w')  # Nhân viên chiếm 5 cột
+        self.table_schedule.heading("nv", text="Nhân viên")
+        self.table_schedule.column("nv", width=col_5, anchor='w')  # Nhân viên chiếm 5 cột
         # Các cột thứ 2 đến chủ nhật
-        for col in columns[2:]:
-            self.table.heading(col, text=col)
-            self.table.column(col, width=col_3, anchor='center')  # Mỗi ngày trong tuần chiếm 3 cột
+        text_cols = ("Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7", "Chủ Nhật")
+        for i, col in enumerate(columns[2:]):
+            self.table_schedule.heading(col, text=text_cols[i])
+            self.table_schedule.column(col, width=col_3, anchor='center')  # Mỗi ngày trong tuần chiếm 3 cột
 
+        # self.init_row_table_schedule(self.start_date.get_date())
 
     # hàm này dùng render data fake 
-    def add_random_rows_to_table(self):
-        """Thêm 10 hàng với dữ liệu ngẫu nhiên vào bảng."""
-        # Các giá trị ca làm có thể random
-        shift_options = ["OFF", "Ca 1", "Ca 2", "Ca 3"]
+    def render_table_schedule(self, data):
+        # Xóa tất cả các hàng hiện có trong bảng
+        for item in self.table_schedule.get_children():
+            self.table_schedule.delete(item)
+
+        self.init_row_table_schedule(self.start_date.get_date())
+
+        if not data or len(data) == 0:
+            messagebox.showinfo("Thông báo", "Lịch làm không tồn tại")
+            return
         
-        # Tạo dữ liệu ngẫu nhiên cho 10 hàng
-        row_count = 4  # Số lượng hàng ngẫu nhiên cần thêm
+        self.schedule_list_build = self.build_data_schedule(data)
+        
+        stt = 1
+        for ma_nv, days in self.schedule_list_build.items():
+            nv= ma_nv + " - " + NhanVienBUS.getInstance().getById(ma_nv).get_Ten()
+            row = [stt, nv] +  [list(day.values())[0] for day in days]
+            self.table_schedule.insert("", "end", values=row)
+            stt += 1
 
-        for i in range(1, row_count + 1):
-            employee_id = f"NV{random.randint(100, 999)}"
-            employee_name = random.choice(["Nguyễn Văn A", "Trần Thị B", "Lê Văn C", "Phạm Minh D", "Hoàng Thị E"])
-            shifts = [random.choice(shift_options) for _ in range(7)]
-            row_data = (i, f"{employee_id} - {employee_name}") + tuple(shifts)
-            self.table.insert("", "end", values=row_data)
 
-       # Nếu không có hàng nào trong bảng, thay đổi cấu trúc bảng để hiển thị thông báo
-        if len(self.table.get_children()) == 1:
-            # Thêm tag cho hàng thông báo
-            self.table.insert("", "end", values=("Lịch làm không tồn tại", "", "", "", "", "", "", "", ""))
-    
-    
+    def build_data_schedule(self, data):
+        schedule = {}
+        for entry in data:
+            ma_ll = entry.get_MaLich()
+            ma_nv = entry.get_MaNhanVien()
+            ma_ca = entry.get_MaCa() if entry.get_MaCa() != 'CA999' else 'OFF' 
+            ngay = datetime.datetime.strptime(entry.get_Ngay().strftime('%Y-%m-%d'), '%Y-%m-%d')
+            weekday = ngay.weekday()  # Monday = 0, Sunday = 6
 
+            if ma_nv not in schedule:
+            #     schedule[ma_nv] = ['OFF'] * 7  # Khởi tạo giá trị 'off' cho cả tuần
+
+            # schedule[ma_nv][weekday] = ma_ca  # Gán mã ca vào đúng thứ trong tuần
+            #  # Khởi tạo danh sách 7 ngày với từ điển {'LL': 'OFF'} cho mỗi ngày
+                schedule[ma_nv] = [{ma_ll: 'OFF'} for _ in range(7)]
+        
+            # Cập nhật mã lịch và mã ca cho ngày cụ thể trong tuần
+            schedule[ma_nv][weekday] = {ma_ll: ma_ca}
+        
+        # In dữ liệu trong schedule
+        # for key,item in schedule.items():
+        #     print(f"{key} : {item}")
+
+        return schedule
 
 if __name__ == "__main__":
     lich_lam = LichLamViecGUI() 

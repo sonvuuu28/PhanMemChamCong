@@ -29,10 +29,16 @@ class TaiKhoanBUS:
         check = tk_dao.update(nv)
         noti = "Sửa Thành Công" if check == 1 else "Sửa Thất Bại"
         return noti
+    def TimKiem_Theo_MaNhanVien(self, Ma):
+        dto = TaiKhoanDAO.getInstance().TimKiem_Theo_MaNhanVien(Ma)
+        return dto
     
 def test():
-    tk_bus = TaiKhoanBUS.getInstance()
+    dto = TaiKhoanBUS.getInstance().TimKiem_Theo_MaNhanVien("NV001")
+    
+    print(dto.get_TenDangNhap())
+    
 
 if __name__ == "__main__":
-    # test()
-    pass
+    test()
+    # pass

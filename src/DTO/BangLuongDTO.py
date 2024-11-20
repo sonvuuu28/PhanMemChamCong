@@ -1,8 +1,9 @@
 class BangLuongDTO:
-    def __init__(self, MaBangLuong, Thang, Nam, PhuCap, KhauTru, HeSoLuong, TongTien, MaNhanVien, deleteStatus):
+    def __init__(self, MaBangLuong, Thang, Nam, PhuCap, KhauTru, HeSoLuong, TongTien, MaNhanVien, deleteStatus, SoGioLam):
         self._MaBangLuong = MaBangLuong  # Mã bảng lương (Primary Key)
         self._Thang = Thang  # Tháng tính lương
         self._Nam = Nam  # Năm tính lương
+        self._SoGioLam = SoGioLam  #Số giừo làm (kiểu DECIMAL)
         self._PhuCap = PhuCap  # Phụ cấp (kiểu DECIMAL)
         self._KhauTru = KhauTru  # Khấu trừ (kiểu DECIMAL)
         self._HeSoLuong = HeSoLuong  # Hệ số lương (kiểu DECIMAL)
@@ -30,6 +31,13 @@ class BangLuongDTO:
 
     def set_Nam(self, Nam):
         self._Nam = Nam
+
+    # Getter và Setter cho SoGioLam
+    def get_SoGioLam(self):
+        return self._SoGioLam
+
+    def set_SoGioLam(self, SoGioLam):
+        self._SoGioLam = SoGioLam
 
     # Getter và Setter cho PhuCap
     def get_PhuCap(self):
@@ -83,8 +91,8 @@ class BangLuongDTO:
         print(f"Hệ Số Lương: {self.get_HeSoLuong()}")
         print(f"Tổng Tiền: {self.get_TongTien()}")
         print(f"Mã Nhân Viên: {self.get_MaNhanVien()}")
-        print(f"Trạng Thái Xóa: {'Đã Xóa' if self.get_deleteStatus() else 'Hoạt Động'}")
+        print(f"Trạng Thái Xóa: {'Đã Xóa' if self.get_deleteStatus()==0 else 'Hoạt Động'}")
 
-# Ví dụ sử dụng
-bang_luong = BangLuongDTO("BL001", 10, 2024, 500.50, 100.00, 23.5, 1500.50, "NV001", False)
-bang_luong.display_info()
+# # Ví dụ sử dụng
+# bang_luong = BangLuongDTO("BL001", 10, 2024, 500.50, 100.00, 23.5, 1500.50, "NV001", False)
+# bang_luong.display_info()

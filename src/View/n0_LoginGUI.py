@@ -40,13 +40,16 @@ class LoginGUI:
         tk_dao = TaiKhoanDAO.getInstance()
         tk = tk_dao.DangNhap(self.TenTaiKhoan.get(), self.MatKhau.get())
         if tk is not None:
-            Quyen = tk.get_MaQuyen()  # Di chuyển dòng này vào trong điều kiện
+            Quyen = tk.get_MaQuyen() 
+            MaNhanVien = tk.get_MaNhanVien()
             if self.window:
                 self.window.destroy()
                 if Quyen == 'Q001':  
+                    print(MaNhanVien)
                     from n1_TrangChuGUI import TrangChuGUI
                     TrangChuGUI()
                 elif Quyen == 'Q002':
+                    print(MaNhanVien)
                     from n1_TrangChuGUI import TrangChuGUI
                     TrangChuGUI()
                 elif Quyen == 'Q003':

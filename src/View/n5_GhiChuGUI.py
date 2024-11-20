@@ -2,19 +2,37 @@ import tkinter as tk
 import utilView
 import customtkinter as ctk
 from PIL import Image, ImageTk
+from tkinter import messagebox
 from tkcalendar import DateEntry
 import datetime
-import os
+import os, sys
+
+
+
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dto_dir = os.path.join(current_dir, '../DTO')
+sys.path.append(dto_dir)
+from GhiChuDTO import GhiChuDTO
+
+
+bus_dir = os.path.join(current_dir, '../BUS')
+sys.path.append(bus_dir)
+from GhiChuBUS import GhiChuBUS
 
 class GhiChuGUI:
     
     def __init__(self):
         # Đường dẫn đến folder Icon
-        current_dir = os.path.dirname(os.path.abspath(__file__))
         self.icon_dir = os.path.join(current_dir, '../Icon')
         
-        # self.noteWindow = None
-        
+        self.ghichu_bus=GhiChuBUS.getInstance()
+        self.isExist = False
+
+         # đoạn này sẽ lấy 2 khoảng ngày theo tuần xếp lịch
+        # fake điều kiện
+        self.start_date_limit = datetime.date(2024, 11, 4)
+        self.end_date_limit = datetime.date(2024, 11, 10)
+
         self.initUI()
 
     def initUI(self):
@@ -48,24 +66,23 @@ class GhiChuGUI:
         tk.Label(select_frame, text="Thời gian:", font=("Arial", 11), bg="#fff").pack(side="left", padx=10)
         
        
-        # Tính toán ngày bắt đầu và kết thúc của tuần hiện tại
-        today = datetime.date.today()
-        start_of_week = today - datetime.timedelta(days=today.weekday())  # Thứ 2 của tuần
 
         # Thêm DateEntry cho ngày bắt đầu với định dạng dd/mm/yyyy
         self.start_date = DateEntry(select_frame, width=12, background='darkblue', 
-                                    foreground='white', borderwidth=2, 
-                                    year=start_of_week.year, month=start_of_week.month, 
-                                    day=start_of_week.day, date_pattern='dd/mm/yyyy')
+                                    foreground='white', borderwidth=2, date_pattern='dd/mm/yyyy')
         self.start_date.pack(side="left", padx=10)
-
-
+        # Đặt giá trị mặc định của DateEntry là rỗng
+        self.start_date.delete(0, "end")
+         # Bind sự kiện khi ngày được chọn
+        self.start_date.bind("<<DateEntrySelected>>", lambda e : self.checkExist())
+        # chỉ chọn ngày kh nhập ngày
+        self.start_date.configure(state='readonly') 
 
 
         # Text Area với height=260
-        contentNote = tk.Text(bodyNote, wrap=tk.WORD, font=("Arial", 11), highlightthickness=1)
-        contentNote.place(x=10, y=40, width=280, height=220)  # Đặt Text area bên dưới DateEntry
-
+        self.contentNote = tk.Text(bodyNote, wrap=tk.WORD, font=("Arial", 11), highlightthickness=1)
+        self.contentNote.place(x=10, y=40, width=280, height=220)  # Đặt Text area bên dưới DateEntry
+        
         # Footer
         footerNote = tk.Frame(noteWindow, width=wWindow, height=60, bg="#fff")
         footerNote.pack_propagate(False)
@@ -95,16 +112,76 @@ class GhiChuGUI:
             corner_radius=4,  # Bo góc 4px
             border_width=0,  # Không có viền
             hover_color="#383838", 
-            command=lambda: self.save_note_content(contentNote)
+            command=self.save_note_content
         )
         save_button.pack(side=tk.RIGHT, padx=(10,30))
 
         noteWindow.mainloop()
 
-    def save_note_content(self, text_widget):
-        """Lưu nội dung ghi chú từ Text widget"""
-        content = text_widget.get("1.0", tk.END).strip()
-        print(f"Nội dung ghi chú: {content}")  # Tạm thời in ra để kiểm tra, có thể lưu vào file hay cơ sở dữ liệu
+    def save_note_content(self):
+         # Lấy ngày đã chọn từ DateEntry
+        selected_date = self.start_date.get_date()
+
+       
+        # Kiểm tra xem ngày chọn có nằm trong khoảng từ 2024-11-04 đến 2024-11-10 không
+        if self.start_date_limit > selected_date or selected_date > self. end_date_limit:
+            messagebox.showerror("Lỗi", f"Ngày đã chọn không nằm trong khoảng từ {self.start_date_limit} đến {self.end_date_limit}!")
+            return
+
+
+        content = self.contentNote.get("1.0", tk.END).strip()
+        if not content:
+            messagebox.showerror("Lỗi", "Nội dung ghi chú không được để trống")
+            
+            return
+        
+        if self.isExist:
+            gc_Dto_update = GhiChuDTO(self.dataCheckExist.get_MaGC(),self.dataCheckExist.get_Ngay(), content)
+            kq = self.ghichu_bus.update(gc_Dto_update)
+            messagebox.showinfo("Thông báo", kq)
+        
+        else:
+            gc_Dto = GhiChuDTO("",selected_date, content)
+            check = self.ghichu_bus.add(gc_Dto)
+            messagebox.showinfo("Thông báo", check)
+        self.reset()
+
+    def reset(self):
+        # Đặt lại DateEntry về start_date_limit
+        # Đặt giá trị mặc định của DateEntry là rỗng
+        self.start_date.configure(state='normal') 
+        self.start_date.delete(0, "end")
+        self.start_date.configure(state='readonly') 
+            # Làm trống text area
+        self.contentNote.delete("1.0", tk.END)
+        self.isExist = False
+    def checkExist(self):
+         # Lấy ngày đã chọn từ DateEntry
+        selected_date = self.start_date.get_date()
+
+        # Kiểm tra xem ngày chọn có nằm trong khoảng từ 2024-11-04 đến 2024-11-10 không
+        if self.start_date_limit > selected_date or selected_date > self. end_date_limit:
+            messagebox.showerror("Lỗi", f"Ngày đã chọn không nằm trong khoảng từ {self.start_date_limit} đến {self.end_date_limit}!")
+            return
+
+
+        #  nếu tồn tại ghi chú
+        self.dataCheckExist = self.ghichu_bus.timkiemtheoNgay(selected_date)
+        if self.dataCheckExist:
+            self.isExist = True
+            confirm = messagebox.askyesno("Xác nhận", "Ghi chú đã được tạo. Bạn xem/ sửa không?")
+            if confirm:
+                # Nếu người dùng chọn "Yes", thực hiện các hành động
+                # Xóa nội dung cũ trước khi thêm nội dung mới
+                self.contentNote.delete("1.0", tk.END)
+                # Chèn nội dung mới vào Text widget
+                self.contentNote.insert("1.0", self.dataCheckExist.get_NoiDung())
+            else:
+                self.reset()
+        else:
+            self.isExist = False
+            self.contentNote.delete("1.0", tk.END)
+
 
 if __name__ == '__main__':
-    GhiChuGUI()
+    aa = GhiChuGUI()

@@ -26,10 +26,10 @@ VALUES
 ('BCC001', '08:05:00', '12:00:00', '2024-10-11', N'Dung gio', 'NV001', 0),
 ('BCC002', '13:10:00', '17:00:00', '2024-10-11', N'Dung gio', 'NV002', 0);
 
-INSERT INTO [BangLuong] ([MaBangLuong], [Thang], [Nam], [PhuCap], KhauTru, [HeSoLuong], TongTien, [MaNhanVien], [Status])
+INSERT INTO [BangLuong] ([MaBangLuong], [Thang], [Nam], [PhuCap], KhauTru, [HeSoLuong], TongTien, [MaNhanVien], [Status], sogiolam)
 VALUES 
-('BL001', 10, 2024, 500.00, 0.000, 23.000, 3000.000,'NV001', 1),
-('BL002', 10, 2024, 500.00, 0.000, 23.000, 3000.000,'NV002', 1);
+('BL001', 10, 2024, 500.00, 0.000, 23.000, 3000.000,'NV001', 1, 3000.000),
+('BL002', 10, 2024, 500.00, 0.000, 23.000, 3000.000,'NV002', 1, 3000.000);
 
 INSERT INTO [GhiChu] ([MaGC], [Ngay], [NoiDung])
 VALUES 

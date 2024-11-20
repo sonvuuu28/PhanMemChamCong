@@ -38,7 +38,40 @@ def entryUtil(frame, text, x, y, width, **kwargs):
 def buttonUtil(frame, text, x, y, width, height, **kwargs):
     button = tk.Button(master=frame, text=text, width=width, height=height, **kwargs)
     button.place(x=x, y=y)
-    
+
+def cusButtonUtil_Image(frame, text, x, y, width, height, image=None, hover_image=None, text_color="black", hover_text_color="#636363", fg_color=None, hover_fg_color=None, **kwargs):
+    # Tạo nút với màu nền mặc định
+    button = ctk.CTkButton(
+        master=frame,
+        text=text,
+        width=width,
+        height=height,
+        image=image,
+        text_color=text_color,
+        fg_color=fg_color,  # Màu nền nút mặc định
+        **kwargs
+    )
+    button.place(x=x, y=y)
+
+    # Nếu có hover_image, hover_text_color và hover_fg_color, bind sự kiện để thay đổi ảnh, màu chữ và màu nền khi hover
+    if hover_image or hover_text_color or hover_fg_color:
+        button.bind("<Enter>", lambda e: button.configure(
+            image=hover_image if hover_image else image,
+            text_color=hover_text_color if hover_text_color else text_color,
+            fg_color=hover_fg_color if hover_fg_color else fg_color  # Thay đổi màu nền khi hover
+        ))
+
+        # Khi chuột rời khỏi nút, trả lại các giá trị mặc định
+        button.bind("<Leave>", lambda e: button.configure(
+            image=image,
+            text_color=text_color,
+            fg_color=fg_color  # Trả lại màu nền ban đầu
+        ))
+
+    return button
+
+
+
 def cusButtonUtil(frame, text, x, y, width, height, **kwargs):
     button = ctk.CTkButton(master=frame, text=text, width=width, height=height, **kwargs)
     button.place(x=x, y=y)

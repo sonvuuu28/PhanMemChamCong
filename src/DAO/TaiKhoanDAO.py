@@ -112,8 +112,37 @@ class TaiKhoanDAO:
         con = self.connection.getConnection()
         cursor = con.cursor()
         
-        # Truy vấn tìm kiếm theo MaNhanVien
         query = "SELECT * FROM TaiKhoan WHERE MaTK = ?"
+        
+        try:
+            cursor.execute(query, Ma)
+            result = cursor.fetchone()  # Lấy kết quả đầu tiên
+            
+            if result:
+                # Gán kết quả truy vấn vào đối tượng NhanVienDTO
+                tk = TaiKhoanDTO(
+                    MaTK=result[0], 
+                    TenDangNhap=result[1],    
+                    MatKhau=result[2], 
+                    MaQuyen=result[3],  
+                    MaNhanVien=result[4],      
+                    Status=result[5]
+                )
+                return tk  # Trả về đối tượng NhanVienDTO
+            else:
+                print(f"Không tìm thấy tài khoản với mã: {Ma}")
+                return None  # Trả về None nếu không tìm thấy
+
+        except pyodbc.Error as e:
+            print("Lỗi khi tìm kiếm tài khoản:", e)
+            return None
+    
+    def TimKiem_Theo_MaNhanVien(self, Ma):
+        con = self.connection.getConnection()
+        cursor = con.cursor()
+        
+        # Truy vấn tìm kiếm theo MaNhanVien
+        query = "SELECT * FROM TaiKhoan WHERE MaNhanVien = ?"
         
         try:
             cursor.execute(query, Ma)

@@ -7,6 +7,8 @@ import os
 
 class TrangChuGUI:
     def __init__(self):
+        # self.User = self.getUser()
+        # print(self.User)
         self.label_chuong = None
         self.UI()
 
@@ -56,7 +58,7 @@ class TrangChuGUI:
         
         if name == "LichLamViec" and window:
             window.destroy() 
-            from n6_LichLamViecMain import LichLamViecGUI
+            from n6_LichLamViecGUI import LichLamViecGUI
             LichLamViecGUI()
             
         if name == "GhiChu" and window:
@@ -184,5 +186,8 @@ class TrangChuGUI:
         window.geometry(f"{xWindow}x{yWindow}+250+40")
         window.mainloop()
 
+    # def getUser(self, MaNhanVien):
+    #     return MaNhanVien
+        
 if __name__ == '__main__':
     TrangChuGUI()
