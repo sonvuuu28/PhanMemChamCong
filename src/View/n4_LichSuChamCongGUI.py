@@ -110,17 +110,44 @@ class ShiftGUI:
 
         self.tree.pack(pady=10)
 
-    def render_table(self, ds_calam):
+        self.tree.bind("<Double-1>", self.on_double_click)
+
+        
+
+    def render_table(self, ds_lichsu):
         """ Hiển thị dữ liệu vào bảng Treeview """
         for row in self.tree.get_children():
             self.tree.delete(row)
-        for item in ds_calam:
-            self.tree.insert('', 'end', values=item)
+        
+        # check if ds_lichsu is empty
+        if not ds_lichsu:
+            return
+
+        for item in ds_lichsu:
+            # Convert LsccDTO to a tuple of its attributes
+            if isinstance(item, LsccDTO):
+                print(item)
+                row = (
+                    item.get_MaCa(),
+                    item.get_Ngay(),
+                    item.get_ThoiGianVao(),
+                    item.get_ThoiGianRa(),
+                    item.get_TinhTrang()
+                )
+            else:
+                # If it's not an LsccDTO instance, skip or handle other types
+                # console output
+                print(item)
+                continue
+
+            # Insert the tuple as a row into the Treeview
+            self.tree.insert('', 'end', values=row)
 
     def on_edit_button_click(self):
         """ Sự kiện khi nhấn nút Sửa """
         selected_item = self.tree.selection()
         if selected_item:
+            print(selected_item)
             maca = self.maca_entry.get()
             ngay = self.ngay_entry.get_date()  # Lấy ngày từ DateEntry
             tgvao = self.tgvao_entry.get()
@@ -144,5 +171,27 @@ class ShiftGUI:
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn một ca làm để sửa!")
 
+    def on_double_click(self, event):
+        selected_item = self.tree.selection()
+        if selected_item:
+
+            self.is_view_detail = True
+            shift_info = self.tree.item(selected_item)["values"]
+            # print(shift_info)
+
+            # Xóa nội dung cũ trước khi chèn mới
+            # self.mabcc.configure(state="normal")
+            self.maca_entry.delete(0, tk.END)
+            self.ngay_entry.delete(0, tk.END)
+            self.tgvao_entry.delete(0, tk.END)
+            self.tgra_entry.delete(0, tk.END)
+            self.tt_entry.delete(0,tk.END)  # Clear StringVar
+
+            self.maca_entry.insert(0, shift_info[0])
+            # self.mabcc.configure(state="readonly")
+            self.ngay_entry.insert(0, shift_info[1])
+            self.tgvao_entry.insert(0, shift_info[2])
+            self.tgra_entry.insert(0, shift_info[3])
+            self.tt_entry.insert(0,shift_info[4])
 if __name__ == "__main__":
     ShiftGUI()

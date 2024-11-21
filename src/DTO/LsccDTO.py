@@ -1,4 +1,12 @@
 class LsccDTO:
+    # def __init__(self, MaCa, Ngay, ThoiGianVao, ThoiGianRa, TinhTrang, Ten):
+    #     self.MaCa = MaCa
+    #     self.Ngay = Ngay
+    #     self.ThoiGianVao = ThoiGianVao
+    #     self.ThoiGianRa = ThoiGianRa
+    #     self.TinhTrang = TinhTrang
+    #     self.Ten = Ten
+
     def __init__(self, MaCa, Ngay, ThoiGianVao, ThoiGianRa, TinhTrang):
         self.MaCa = MaCa
         self.Ngay = Ngay
@@ -20,3 +28,10 @@ class LsccDTO:
     
     def get_TinhTrang(self):
         return self.TinhTrang
+    
+    # thêm tên nhân viên vào đây
+    # def get_Ten(self):
+    #     return self.Ten
+    
+    def __str__(self):
+        return f"MaCa: {self.MaCa}, Ngay: {self.Ngay}, ThoiGianVao: {self.ThoiGianVao}, ThoiGianRa: {self.ThoiGianRa}, TinhTrang: {self.TinhTrang},"

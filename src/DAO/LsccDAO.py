@@ -21,9 +21,16 @@ class LsccDAO:
         con = self.connection.getConnection()
         cursor = con.cursor()
 
+        # print(shift_id)
+        # cursor.execute("SELECT * FROM BangChamCong WHERE MaBCC = ?", (shift_id,))
+        # row = cursor.fetchone()
+        # print("Row to update:", row)
+
+
+
         update_query = '''
-            UPDATE LichSuChamCong
-            SET MaCa = ?, Ngay = ?, ThoiGianVao = ?, ThoiGianRa = ?, TinhTrang = ?
+            UPDATE BangChamCong
+            SET MaBCC = ?, Ngay = ?, ThoiGianVao = ?, ThoiGianRa = ?, Status = ?
             WHERE MaBCC = ?
         '''
         
@@ -35,6 +42,8 @@ class LsccDAO:
             updated_shift.get_TinhTrang(),
             shift_id
         )
+
+        # print(updated_shift.get_TinhTrang)
 
         try:
             cursor.execute(update_query, shift_data)
@@ -52,29 +61,27 @@ class LsccDAO:
         """ Lấy tất cả các bản ghi lịch sử chấm công từ cơ sở dữ liệu """
         con = self.connection.getConnection()
         cursor = con.cursor()
-        
+
         cursor.execute('''
-            SELECT MaBCC, ThoiGianVao, ThoiGianRa, Ngay, TinhTrang, MaNhanVien, deleteStatus, Ten
+            SELECT MaBCC, ThoiGianVao, ThoiGianRa, Ngay, TinhTrang, BangChamCong.MaNhanVien, BangChamCong.Status, Ten
             FROM BangChamCong 
             JOIN NhanVien ON BangChamCong.MaNhanVien = NhanVien.MaNhanVien 
-            WHERE Status = 1
+            WHERE BangChamCong.Status = 0 and NhanVien.Status = 1
         ''')
         
         danh_sach_lich_su = []
         for row in cursor:
-            # Tạo đối tượng dictionary cho mỗi dòng
-            lich_su = {
-                'MaBCC': row[0],
-                'ThoiGianVao': row[1],
-                'ThoiGianRa': row[2],
-                'Ngay': row[3],
-                'TinhTrang': row[4],
-                'MaNhanVien': row[5],
-                'deleteStatus': row[6],
-                'Ten': row[7]
-            }
-            # Thêm dictionary vào danh sách
-            danh_sach_lich_su.append(lich_su)
+            # Create LsccDTO object for each row
+            dto = LsccDTO(
+                MaCa=row[0],             # Mapping MaBCC to MaCa
+                Ngay=row[3],             # Ngay
+                ThoiGianVao=row[1],      # ThoiGianVao
+                ThoiGianRa=row[2],       # ThoiGianRa
+                TinhTrang=row[4],      # TinhTrang
+                # Ten=row[7]  #ten nhan vien
+            )
+            # Add DTO object to the list
+            danh_sach_lich_su.append(dto)
         
         # Trả về danh sách kết quả
         return danh_sach_lich_su

@@ -6,6 +6,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 dto_dir = os.path.join(current_dir, '../DTO')
 sys.path.append(dto_dir)
 from LsccDTO import LsccDTO  # Make sure LsccDTO is imported here
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dao_dir = os.path.join(current_dir, '../DAO')
+sys.path.append(dao_dir)
+from LsccDAO import LsccDAO  # Make sure LsccDTO is imported here
 
 class LsccBUS:
     def __init__(self):
