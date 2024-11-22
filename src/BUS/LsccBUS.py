@@ -24,8 +24,13 @@ class LsccBUS:
         data = ls_dao.get_all()  # Assuming get_all() fetches data correctly
         return None if len(data) == 0 else data
 
-    def update_shift(self, shift_id, updated_shift: LsccDTO):
+    def update_shift(self, dataUpdate):
         ls_dao = LsccDAO.getInstance()
         # Assuming you have the update method in LsccDAO
-        result = ls_dao.update(shift_id, updated_shift)
+        result = ls_dao.update(dataUpdate)
+        return result
+    def getbydate(self, date):
+        ls_dao = LsccDAO.getInstance()
+        # Assuming you have the update method in LsccDAO
+        result = ls_dao.get_by_date(date)
         return result

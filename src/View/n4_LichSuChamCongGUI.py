@@ -11,10 +11,12 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 bus_dir = os.path.join(current_dir, '../BUS')
 sys.path.append(bus_dir)
 from LsccBUS import LsccBUS
+from NhanVienBUS import NhanVienBUS
 
 dto_dir = os.path.join(current_dir, '../DTO')
 sys.path.append(dto_dir)
 from LsccDTO import LsccDTO
+from NhanVienDTO import NhanVienDTO
 
 class ShiftGUI:
     def __init__(self):
@@ -26,8 +28,9 @@ class ShiftGUI:
 
         # Khởi tạo BUS và danh sách ca làm
         self.lich_su_bus = LsccBUS.getInstance()  # Lấy instance của LsccBUS
-        self.ds_lichsu = self.lich_su_bus.getall()  # Lấy tất cả dữ liệu lịch sử chấm công
-
+        self.nhanvien_bus = NhanVienBUS.getInstance()  # Lấy instance của NhaNVviENbuS
+        self.ds_lichsu = self.lich_su_bus.getbydate(self.ngay_entry.get_date())
+   
         # Hiển thị bảng dữ liệu
         self.render_table(self.ds_lichsu)
 
@@ -42,7 +45,7 @@ class ShiftGUI:
         wWindow = 1000
         hWindow = 650
         self.shiftWindow.geometry(f"{wWindow}x{hWindow}+300+40")
-        self.shiftWindow.title("Quản Lý Ca Làm")
+        self.shiftWindow.title("LỊCH SỬ CHẤM CÔNG")
 
         # Frame chứa tất cả các widget
         frameShift = tk.Frame(self.shiftWindow, bg='#ffffff')
@@ -50,7 +53,7 @@ class ShiftGUI:
 
         # Tạo giao diện bên trái (nơi nhập liệu)
         left_panel = tk.Frame(frameShift, bg="white", width=400)
-        left_panel.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        left_panel.grid(row=0, column=0, padx=10, pady=80, sticky="nsew")
 
         # Tạo giao diện bên phải (nơi hiển thị bảng)
         right_panel = tk.Frame(frameShift, bg="white", width=600)
@@ -60,15 +63,17 @@ class ShiftGUI:
         frameShift.grid_columnconfigure(1, weight=2)
 
         # ---------------------- Phần Bên Trái ----------------------
-        self.maca_label = tk.Label(left_panel, text="Mã Ca:", bg="white")
-        self.maca_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
-        self.maca_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
-        self.maca_entry.grid(row=0, column=1, padx=10, pady=10)
+        self.nv_label = tk.Label(left_panel, text="Nhân viên:", bg="white")
+        self.nv_label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
+        self.nv_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+        self.nv_entry.grid(row=0, column=1, padx=10, pady=10)
 
         self.ngay_label = tk.Label(left_panel, text="Ngày:", bg="white")
         self.ngay_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
         self.ngay_entry = DateEntry(left_panel, width=16, background="darkblue", foreground="white", borderwidth=2)
         self.ngay_entry.grid(row=1, column=1, padx=10, pady=10)
+        # Bắt sự kiện khi giá trị trong DateEntry thay đổi
+        self.ngay_entry.bind("<<DateEntrySelected>>", self.on_date_change)
 
         self.tgvao_label = tk.Label(left_panel, text="Thời gian vào:", bg="white")
         self.tgvao_label.grid(row=2, column=0, padx=10, pady=10, sticky="w")
@@ -80,83 +85,105 @@ class ShiftGUI:
         self.tgra_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
         self.tgra_entry.grid(row=3, column=1, padx=10, pady=10)
 
+        # self.tt_label = tk.Label(left_panel, text="Tình trạng:", bg="white")
+        # self.tt_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
+        # self.tt_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+        # self.tt_entry.grid(row=4, column=1, padx=10, pady=10)
+        # Tạo label cho tình trạng
         self.tt_label = tk.Label(left_panel, text="Tình trạng:", bg="white")
         self.tt_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
-        self.tt_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
+
+        # Tạo combobox với các giá trị "Đúng" và "Trễ"
+        self.tt_entry = ttk.Combobox(left_panel, width=18, state="readonly")
+        self.tt_entry['values'] = ["Đúng giờ", "Trễ giờ"]  # Các giá trị có thể chọn
         self.tt_entry.grid(row=4, column=1, padx=10, pady=10)
 
-        self.edit_button = tk.Button(left_panel, text="Sửa", command=self.on_edit_button_click)
-        self.edit_button.grid(row=5, column=0, padx=10, pady=20, sticky="w")
+        # Đặt giá trị mặc định cho combobox
+        self.tt_entry.set("Đúng giờ")
+
+
+        # self.edit_button = tk.Button(left_panel, text="Sửa", command=self.on_edit_button_click)
+        # self.edit_button.grid(row=5, column=0, padx=10, pady=20, sticky="w")
 
         # ---------------------- Phần Bên Phải ----------------------
-        details_label = tk.Label(right_panel, text="Chi tiết ca làm", font=("Helvetica", 16), bg="white")
+        details_label = tk.Label(right_panel, text="CHI TIẾT CHẤM CÔNG", font=("Helvetica", 16), bg="white")
         details_label.pack(pady=20)
 
-        # Tạo bảng Treeview cho ca làm
-        columns = ('Mã Ca', 'Ngày', 'Thời gian vào', 'Thời gian ra', 'Tình trạng')
+       # Tạo bảng Treeview với các cột mới
+        columns = ('STT', 'Mã', 'Nhân viên', 'Ngày', 'Thời gian vào', 'Thời gian ra', 'Tình trạng')
 
-        self.tree = ttk.Treeview(right_panel, columns=columns, show='headings', height=10)
-        self.tree.heading('Mã Ca', text='Mã Ca')
+        self.tree = ttk.Treeview(right_panel, columns=columns, show='headings', height=25)
+        self.tree.heading('STT', text='STT')
+        self.tree.heading('Mã', text='Mã')
+        self.tree.heading('Nhân viên', text='Nhân viên')
         self.tree.heading('Ngày', text='Ngày')
         self.tree.heading('Thời gian vào', text='Thời gian vào')
         self.tree.heading('Thời gian ra', text='Thời gian ra')
         self.tree.heading('Tình trạng', text='Tình trạng')
 
-        self.tree.column('Mã Ca', width=100, anchor='center')
+        self.tree.column('STT', width=50, anchor='center')
+        self.tree.column('Mã', width=100, anchor='center')
+        self.tree.column('Nhân viên', width=100, anchor='center')
         self.tree.column('Ngày', width=100, anchor='center')
         self.tree.column('Thời gian vào', width=120, anchor='center')
         self.tree.column('Thời gian ra', width=120, anchor='center')
         self.tree.column('Tình trạng', width=120, anchor='center')
-
         self.tree.pack(pady=10)
 
         self.tree.bind("<Double-1>", self.on_double_click)
 
+    def on_date_change(self, event):
+        """ Xử lý khi ngày được thay đổi trong DateEntry """
+        # Lấy ngày mới từ DateEntry
+        selected_date = self.ngay_entry.get_date()
         
-
+        # Lấy danh sách ca làm theo ngày từ BUS
+        self.ds_lichsu = self.lich_su_bus.getbydate(selected_date)
+        
+        # Làm mới lại bảng với dữ liệu mới
+        self.render_table(self.ds_lichsu)
     def render_table(self, ds_lichsu):
         """ Hiển thị dữ liệu vào bảng Treeview """
+        # Xóa toàn bộ dữ liệu cũ trong bảng
         for row in self.tree.get_children():
             self.tree.delete(row)
         
-        # check if ds_lichsu is empty
+        # Nếu không có dữ liệu, thoát sớm
         if not ds_lichsu:
+            messagebox.showinfo("Thông báo", "Không có dữ liệu để hiển thị!")
             return
 
-        for item in ds_lichsu:
-            # Convert LsccDTO to a tuple of its attributes
-            if isinstance(item, LsccDTO):
-                print(item)
-                row = (
-                    item.get_MaCa(),
-                    item.get_Ngay(),
-                    item.get_ThoiGianVao(),
-                    item.get_ThoiGianRa(),
-                    item.get_TinhTrang()
-                )
-            else:
-                # If it's not an LsccDTO instance, skip or handle other types
-                # console output
-                print(item)
-                continue
-
-            # Insert the tuple as a row into the Treeview
+        # Thêm dữ liệu vào bảng với số thứ tự
+        for idx, item in enumerate(ds_lichsu, start=1):
+            nv = self.nhanvien_bus.getById(item.get_MaNhanVien())
+            row = (
+                idx,  # Số thứ tự
+                item.get_MaBCC(),  # Mã
+                f"{nv.get_MaNhanVien()} - {nv.get_Ten()}",  # Ngày
+                item.get_Ngay(),  # Ngày
+                item.get_ThoiGianVao(),  # Thời gian vào
+                item.get_ThoiGianRa(),  # Thời gian ra
+                item.get_TinhTrang()  # Tình trạng
+            )
+            # Chèn dòng vào Treeview
             self.tree.insert('', 'end', values=row)
+
+
 
     def on_edit_button_click(self):
         """ Sự kiện khi nhấn nút Sửa """
         selected_item = self.tree.selection()
         if selected_item:
             print(selected_item)
-            maca = self.maca_entry.get()
+            nv = self.nv_entry.get()
             ngay = self.ngay_entry.get_date()  # Lấy ngày từ DateEntry
             tgvao = self.tgvao_entry.get()
             tgra = self.tgra_entry.get()
             tt = self.tt_entry.get()
 
-            if maca and ngay and tgvao and tgra and tt:
+            if nv and ngay and tgvao and tgra and tt:
                 # Tạo đối tượng LsccDTO với dữ liệu mới
-                updated_shift = LsccDTO(maca, ngay, tgvao, tgra, tt)
+                updated_shift = LsccDTO(nv, ngay, tgvao, tgra, tt)
                 
                 # Cập nhật ca làm thông qua BUS
                 self.lich_su_bus.update_shift(selected_item[0], updated_shift)
@@ -181,17 +208,21 @@ class ShiftGUI:
 
             # Xóa nội dung cũ trước khi chèn mới
             # self.mabcc.configure(state="normal")
-            self.maca_entry.delete(0, tk.END)
+            self.nv_entry.delete(0, tk.END)
             self.ngay_entry.delete(0, tk.END)
             self.tgvao_entry.delete(0, tk.END)
             self.tgra_entry.delete(0, tk.END)
             self.tt_entry.delete(0,tk.END)  # Clear StringVar
 
-            self.maca_entry.insert(0, shift_info[0])
+            self.nv_entry.insert(0, shift_info[2])
             # self.mabcc.configure(state="readonly")
-            self.ngay_entry.insert(0, shift_info[1])
-            self.tgvao_entry.insert(0, shift_info[2])
-            self.tgra_entry.insert(0, shift_info[3])
-            self.tt_entry.insert(0,shift_info[4])
+            self.ngay_entry.insert(0, shift_info[3])
+            self.tgvao_entry.insert(0, shift_info[4])
+            self.tgra_entry.insert(0, shift_info[5])
+            if shift_info[6] == 'Dung gio':
+                self.tt_entry.set('Đúng giờ')
+            else: 
+                self.tt_entry.set('Trễ giờ')
+                
 if __name__ == "__main__":
     ShiftGUI()

@@ -17,7 +17,7 @@ class LsccDAO:
     def getInstance():
         return LsccDAO()
 
-    def update(self, shift_id, updated_shift: LsccDTO):
+    def update(self, dataUpdate):
         con = self.connection.getConnection()
         cursor = con.cursor()
 
@@ -30,17 +30,17 @@ class LsccDAO:
 
         update_query = '''
             UPDATE BangChamCong
-            SET MaBCC = ?, Ngay = ?, ThoiGianVao = ?, ThoiGianRa = ?, Status = ?
+            SET Ngay = ?, ThoiGianVao = ?, ThoiGianRa = ?, Status = ?
             WHERE MaBCC = ?
         '''
         
         shift_data = (
-            updated_shift.get_MaCa(),
-            updated_shift.get_Ngay(),
-            updated_shift.get_ThoiGianVao(),
-            updated_shift.get_ThoiGianRa(),
-            updated_shift.get_TinhTrang(),
-            shift_id
+            dataUpdate.get_Ngay(),
+            dataUpdate.get_ThoiGianVao(),
+            dataUpdate.get_ThoiGianRa(),
+            dataUpdate.get_TinhTrang(),
+            dataUpdate.get_MaBCC(),
+            
         )
 
         # print(updated_shift.get_TinhTrang)
@@ -56,7 +56,35 @@ class LsccDAO:
         finally:
             cursor.close()
             con.close()
-
+    def get_by_date(self, date):
+        """ Lấy tất cả các bản ghi lịch sử chấm công từ cơ sở dữ liệu """
+        con = self.connection.getConnection()
+        cursor = con.cursor()
+        query = '''
+            SELECT *
+            FROM BangChamCong 
+            WHERE Ngay = ?
+        '''
+        data=(date)
+        cursor.execute(query, data)
+        
+        danh_sach_lich_su = []
+        for row in cursor:
+            # Create LsccDTO object for each row
+            dto = LsccDTO(
+                MaBCC=row[0],             # Mapping MaBCC to MaCa
+                ThoiGianVao=row[1],      # ThoiGianVao
+                ThoiGianRa=row[2],       # ThoiGianRa
+                Ngay=row[3],             # Ngay
+                TinhTrang=row[4],      # TinhTrang
+                MaNhanVien=row[5],
+                Status=row[6]  
+            )
+            # Add DTO object to the list
+            danh_sach_lich_su.append(dto)
+        
+        # Trả về danh sách kết quả
+        return danh_sach_lich_su
     def get_all(self):
         """ Lấy tất cả các bản ghi lịch sử chấm công từ cơ sở dữ liệu """
         con = self.connection.getConnection()
