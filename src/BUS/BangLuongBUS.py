@@ -28,13 +28,13 @@ class BangLuongBUS:
         luong_dao = BangLuongDAO.getInstance()
         check = luong_dao.insert(luong)
         noti = "Thêm lương thành công" if check == 1 else "Thêm lương thất bại, đã có lỗi xảy ra"
-        return noti
+        return [check, noti]
     
     def update(self, luong):
         luong_dao = BangLuongDAO.getInstance()
         check = luong_dao.update(luong)
         noti = "Cập nhật lương thành công" if check == 1 else "Cập nhật lương thất bại"
-        return noti
+        return [check, noti]
     
     def getAll(self):
         luong_dao=BangLuongDAO.getInstance()
@@ -47,7 +47,8 @@ class BangLuongBUS:
 
         return None if not data else data
         
-            
+    def taoma(self):
+        return BangLuongDAO.getInstance().tao_MaBangLuong()
 
 def test():
     tk_bus = BangLuongBUS.getInstance()

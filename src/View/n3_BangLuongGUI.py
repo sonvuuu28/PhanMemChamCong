@@ -31,15 +31,37 @@ class BangLuongGUI:
         self.icon_dir = os.path.join(current_dir, '../Icon')
 
         self.bangluong_bus=BangLuongBUS.getInstance()
+        self.nv_bus=NhanVienBUS.getInstance()
         self.is_view_detail=False
-
 
 
         self.initUI()
         self.getData()
         self.salaryWindow.mainloop()
 
+    def format_currency(self, value):
+        # Nếu là int, chỉ cần định dạng trực tiếp
+        if isinstance(value, int):
+            formatted = f"{value:,}".replace(",", ".")  # Định dạng số nguyên
+        else:  # Nếu là float, định dạng với 2 chữ số thập phân
+            formatted = f"{float(value):,.2f}".replace(",", " ").replace(".", ",").replace(" ", ".")
+        
+        return f"{formatted} VNĐ"
+    
+    
+    def parse_currency(self, currency_str):
+        try:
+            # Loại bỏ đơn vị "VNĐ" và các khoảng trắng dư thừa
+            cleaned_str = currency_str.replace("VNĐ", "").strip()
 
+            # Chuyển dấu "." thành khoảng trắng tạm thời để xử lý đúng
+            # Chuyển dấu "," (thập phân) thành dấu "."
+            normalized_str = cleaned_str.replace(".", "").replace(",", ".")
+
+            # Chuyển đổi chuỗi thành số thực (float) và sau đó lấy phần nguyên (int)
+            return int(float(normalized_str))  # Trả về kiểu int
+        except ValueError:
+            raise ValueError("Chuỗi đầu vào không hợp lệ")
 
     def back_Trang_Chu(self, window):
         window.destroy()
@@ -65,28 +87,31 @@ class BangLuongGUI:
         for item in self.salary_table.get_children():
             self.salary_table.delete(item)
 
-        # Thêm dữ liệu mới từ salary_list vào bảng
-        if not salary_list: return
-
-
         for i, salary in enumerate(salary_list, start=1):
             # Giả sử salary là một dictionary chứa các trường như dưới đây
+            mabl=salary.get_MaBangLuong()
             manv=salary.get_MaNhanVien()
-            tennv=NhanVienBUS.getInstance().getById(salary.get_MaNhanVien()).get_Ten()
-            sogio=self.calculate_total_hours_minutes(salary.get_MaNhanVien(), self.month_cb.get(), self.year_cb.get())
+            tennv=self.nv_bus.getById(salary.get_MaNhanVien()).get_Ten()
+            # sogio=self.calculate_total_hours_minutes(salary.get_MaNhanVien(), self.month_cb.get(), self.year_cb.get())
+            sogio=salary.get_SoGioLam()
             hsluong=salary.get_HeSoLuong()
-            phucap=salary.get_PhuCap()
-            khautru=salary.get_KhauTru()
+            phucap = int(round(salary.get_PhuCap()))  # Làm tròn rồi chuyển sang int
+            khautru = int(round(salary.get_KhauTru()))
+            tongluong=self.calc_tongluong(sogio=sogio, hesoluong=hsluong, phucap=phucap, khautru=khautru)
 
+            phucap = self.format_currency(phucap)
+            khautru = self.format_currency(khautru)
+            tongluong = self.format_currency(tongluong)
+            
             self.salary_table.insert('', 'end', values=(
                 f"{i}",  # STT với padding
-                f"{manv}",
-                f"{tennv}",
-                f"{sogio}", 
+                f"{mabl}",
+                f"{manv}-{tennv}",
+                f"{round(sogio, 2)}", 
                 f"{hsluong}", 
                 f"{phucap}",
                 f"{khautru}",
-                f"{self.calc_tongluong(sogio=sogio, hesoluong=hsluong, phucap=phucap, khautru=khautru)}"
+                f"{tongluong}"
                 # f"{salary.get_TongTien()}"
         ))
 
@@ -184,14 +209,14 @@ class BangLuongGUI:
         table_frame.pack(fill='both',expand=True)
 
         # Tạo bảng lương với Treeview
-        columns = ("stt",'ma_nv','ten_nv','so_gio','heso_luong','phu_cap','khau_tru','tong_luong',)
+        columns = ("stt",'ma_bl','ten_nv','so_gio','heso_luong','phu_cap','khau_tru','tong_luong',)
         self.salary_table = ttk.Treeview(table_frame, columns=columns, show='headings')
         self.salary_table.pack(fill='both',expand=True)
 
         # Đặt tên cột
         self.salary_table.heading('stt', text='STT')
-        self.salary_table.heading('ma_nv', text='ID')
-        self.salary_table.heading('ten_nv', text='Họ tên')
+        self.salary_table.heading('ma_bl', text='ID')
+        self.salary_table.heading('ten_nv', text='Nhân viên')
         self.salary_table.heading('so_gio', text='Số giờ')
         self.salary_table.heading('heso_luong', text='Hệ số lương')
         self.salary_table.heading('phu_cap', text='Phụ cấp')
@@ -206,7 +231,7 @@ class BangLuongGUI:
         width_span_4 = width_span_1 * 4  # Cột có span 4
 
         self.salary_table.column('stt', width=width_span_1)
-        self.salary_table.column('ma_nv', width=width_span_2)
+        self.salary_table.column('ma_bl', width=width_span_2)
         self.salary_table.column('ten_nv', width=width_span_4)
         self.salary_table.column('so_gio', width=width_span_4)
         self.salary_table.column('heso_luong', width=width_span_4)
@@ -237,12 +262,12 @@ class BangLuongGUI:
         left_footer_frame.pack_propagate(False)
 
         self.inp_id = utilView.create_input_with_label(left_footer_frame, "ID", 0, 0)
-        self.inp_ten = utilView.create_input_with_label(left_footer_frame, "Họ tên", 0, 1)
-        self.inp_sogio = utilView.create_input_with_label(left_footer_frame, "Số giờ", 1, 0)
-        self.inp_hsl = utilView.create_input_with_label(left_footer_frame, "Hệ số lương", 1, 1)
-        self.inp_phucap = utilView.create_input_with_label(left_footer_frame, "Phụ cấp", 2, 0)
-        self.inp_khautru = utilView.create_input_with_label(left_footer_frame, "Khấu trừ", 2, 1)
-        self.inp_tong = utilView.create_input_with_label(left_footer_frame, "Tổng lương", 3, 0)
+        # self.inp_ten = utilView.create_input_with_label(left_footer_frame, "Họ tên", 0, 1)
+        # self.inp_sogio = utilView.create_input_with_label(left_footer_frame, "Số giờ", 1, 0)
+        # self.inp_hsl = utilView.create_input_with_label(left_footer_frame, "Hệ số lương", 1, 1)
+        self.inp_phucap = utilView.create_input_with_label(left_footer_frame, "Phụ cấp", 1, 0)
+        self.inp_khautru = utilView.create_input_with_label(left_footer_frame, "Khấu trừ", 2, 0)
+        # self.inp_tong = utilView.create_input_with_label(left_footer_frame, "Tổng lương", 3, 0)
         
         # Cấu hình cột để chúng giãn đều
         left_footer_frame.grid_columnconfigure(0, weight=1)
@@ -277,7 +302,8 @@ class BangLuongGUI:
             font=("Arial", 12, "bold"),  # Font chữ
             corner_radius=4,  # Bo góc 4px
             border_width=0,  # Không có viền
-            hover_color="#383838"
+            hover_color="#383838",
+            command=self.edit_bangluong
         )
         delete_button = ctk.CTkButton(
             right_footer_frame, 
@@ -302,13 +328,35 @@ class BangLuongGUI:
         )
 
         # Đặt các nút theo chiều dọc
-        add_button.pack(pady=(10, 5))  # Khoảng cách phía trên là 10, phía dưới là 5
+        # add_button.pack(pady=(10, 5))  # Khoảng cách phía trên là 10, phía dưới là 5
         edit_button.pack(pady=5)       # Khoảng cách đều nhau giữa các nút
-        delete_button.pack(pady=5)
+        # delete_button.pack(pady=5)
         reset_button.pack(pady=5)
 
     def getData(self):
         self.salary_list=self.bangluong_bus.getByDate(self.month_cb.get(), self.year_cb.get())
+
+        # Thêm dữ liệu mới từ salary_list vào bảng
+        if not self.salary_list:
+            ds_nv = self.nv_bus.list()
+
+            luong = None
+            for nv in ds_nv:
+                ma_bl = self.bangluong_bus.taoma()
+                sogio=self.calculate_total_hours_minutes(nv.get_MaNhanVien(), self.month_cb.get(), self.year_cb.get())
+                hsluong = 1.5
+                
+                if nv.get_ChucVu() == 'Quản Lý':
+                    hsluong = 1.7
+
+                luong = BangLuongDTO(ma_bl, self.month_cb.get(), self.year_cb.get(), 0, 0, hsluong, 0, nv.get_MaNhanVien(), 1, sogio)
+                self.bangluong_bus.insert(luong)
+
+            self.salary_list=self.bangluong_bus.getByDate(self.month_cb.get(), self.year_cb.get())
+            
+
+            # return
+        
         self.render_salary_list(self.salary_list)
 
     
@@ -342,6 +390,7 @@ class BangLuongGUI:
 
             # Lấy dữ liệu của hàng đã chọn
             item_values = self.salary_table.item(selected_item, "values")
+
             self.show_value_input(item_values)
 
 
@@ -351,21 +400,65 @@ class BangLuongGUI:
         self.inp_id.insert(0, values[1])  # Gán giá trị mới
         self.inp_id.configure(state='readonly') 
 
-        self.inp_ten.insert(0, values[2])  # Gán giá trị mới
-        self.inp_ten.configure(state='readonly') 
+        # self.inp_ten.insert(0, values[2])  # Gán giá trị mới
+        # self.inp_ten.configure(state='readonly') 
 
-        self.inp_sogio.insert(0, values[3])  # Gán giá trị mới
-        self.inp_sogio.configure(state='readonly') 
+        # self.inp_sogio.insert(0, values[3])  # Gán giá trị mới
+        # self.inp_sogio.configure(state='readonly') 
         
-        self.inp_hsl.insert(0, values[4])  # Gán giá trị mới
-        self.inp_hsl.configure(state='readonly') 
+        # self.inp_hsl.insert(0, values[4])  # Gán giá trị mới
+        # self.inp_hsl.configure(state='readonly') 
         
-        self.inp_phucap.insert(0, values[5])  # Gán giá trị mới
+        self.inp_phucap.insert(0, self.parse_currency(values[5]))  # Gán giá trị mới
         
-        self.inp_khautru.insert(0, values[6])  # Gán giá trị mới
+        self.inp_khautru.insert(0, self.parse_currency(values[6]))  # Gán giá trị mới
         
-        self.inp_tong.insert(0, values[7])  # Gán giá trị mới
-        self.inp_tong.configure(state='readonly') 
+        # self.inp_tong.insert(0, values[7])  # Gán giá trị mới
+        # self.inp_tong.configure(state='readonly') 
+        self.is_view_detail=True
+
+
+    def edit_bangluong(self):
+        if not self.is_view_detail: return  
+        confirm = messagebox.askyesno(
+                "Xác nhận",
+                "Bạn đã kiểm tra kĩ thông tin?"
+            )
+        if confirm:
+            try:
+                # Kiểm tra nếu input_1 và input_2 là số nguyên
+                ktru = int(self.inp_khautru.get())  # Chuyển input_1 sang int
+                pcap = int(self.inp_phucap.get())  # Chuyển input_2 sang int
+
+                luong_edit = None
+                for l in self.salary_list:
+                    if l.get_MaBangLuong() == self.inp_id.get():
+                        luong_edit = l 
+                if luong_edit:
+                    luong_edit.set_KhauTru(ktru)
+                    luong_edit.set_PhuCap(pcap)
+
+                    luong_edit.set_TongTien(
+                        self.calc_tongluong(luong_edit.get_SoGioLam(), luong_edit.get_HeSoLuong(), luong_edit.get_PhuCap(), luong_edit.get_KhauTru())
+                    )
+
+                    res=self.bangluong_bus.update(luong_edit)
+                    if res[0] == 1:
+                        messagebox.showinfo("Thông báo", res[1])
+                        self.reset()
+                    else:
+                        messagebox.showerror("Lỗi", res[1])
+
+                else: messagebox.showerror("Lỗi", "Lương không tồn tại")
+
+
+            except ValueError:
+                # Nếu không phải số nguyên, hiển thị thông báo lỗi
+                messagebox.showerror("Lỗi","Phụ cấp và khấu trừ không hợp lệ!")
+                return  # Dừng xử lý nếu dữ liệu không hợp lệ
+        else:
+            return  # Người dùng chọn "No", không làm gì cả
+
 
 
     def reset(self):
@@ -374,21 +467,21 @@ class BangLuongGUI:
         self.inp_id.configure(state='normal') 
         self.inp_id.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
 
-        self.inp_ten.configure(state='normal') 
-        self.inp_ten.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        # self.inp_ten.configure(state='normal') 
+        # self.inp_ten.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
        
-        self.inp_hsl.configure(state='normal')   
-        self.inp_hsl.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        # self.inp_hsl.configure(state='normal')   
+        # self.inp_hsl.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
 
-        self.inp_sogio.configure(state='normal') 
-        self.inp_sogio.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        # self.inp_sogio.configure(state='normal') 
+        # self.inp_sogio.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
         
         self.inp_phucap.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
         
         self.inp_khautru.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
         
-        self.inp_tong.configure(state='normal') 
-        self.inp_tong.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
+        # self.inp_tong.configure(state='normal') 
+        # self.inp_tong.delete(0, tk.END)  # Xóa giá trị cũ trong input nếu có
 
         self.salaryWindow.focus_set() 
 
@@ -404,7 +497,7 @@ class BangLuongGUI:
 
     def calc_tongluong(self, sogio, hesoluong, phucap, khautru ):
         luong_co_ban = 24000
-        return round(sogio * float(hesoluong) * float(luong_co_ban) + float(phucap) - float(khautru), 2)
+        return round(float(sogio) * float(hesoluong) * float(luong_co_ban) + float(phucap) - float(khautru), 2)
 
     
     
