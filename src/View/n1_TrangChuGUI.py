@@ -100,11 +100,11 @@ class TrangChuGUI:
         tk_chuongImageHover = ImageTk.PhotoImage(ChuongImageHover)
 
         # Tạo Label để hiển thị hình ảnh trong Frame
-        label_chuong = tk.Label(frameBiggest, image=tk_chuongImage, bg='white')
-        label_chuong.image = tk_chuongImage
-        label_chuong.place(x=800, y=15)
-        label_chuong.bind("<Button-1>", lambda event: self.nhomNut("Chuong", window))
-        self.hover(label_chuong, tk_chuongImage, tk_chuongImageHover, None)
+        # label_chuong = tk.Label(frameBiggest, image=tk_chuongImage, bg='white')
+        # label_chuong.image = tk_chuongImage
+        # label_chuong.place(x=800, y=15)
+        # label_chuong.bind("<Button-1>", lambda event: self.nhomNut("Chuong", window))
+        # self.hover(label_chuong, tk_chuongImage, tk_chuongImageHover, None)
         
         ### Label setting
         settingImage = Image.open(os.path.join(icon_dir, "setting.png"))
@@ -176,11 +176,11 @@ class TrangChuGUI:
         self.hover(label_LichSuChamCong, tk_lichSuChamCongImage, tk_lichSuChamCongImageHover, label_LichSuChamCong_title)
         
         ### BUTTON Ghi Chú
-        utilView.cusButtonUtil(frameBiggest, 'Ghi Chú', 350, 410, 300, 41, text_color='black',
-                              fg_color='#D9D9D9', font=("", 13, "bold"), corner_radius=5, hover_color='#CACACA', command=lambda: self.nhomNut("GhiChu", window))
+        # utilView.cusButtonUtil(frameBiggest, 'Ghi Chú', 350, 410, 300, 41, text_color='black',
+        #                       fg_color='#D9D9D9', font=("", 13, "bold"), corner_radius=5, hover_color='#CACACA', command=lambda: self.nhomNut("GhiChu", window))
 
         ### BUTTON Xếp Lịch Làm
-        utilView.cusButtonUtil(frameBiggest, 'Lịch Làm Việc', 322, 510, 355, 50, text_color='white',
+        utilView.cusButtonUtil(frameBiggest, 'Lịch Làm Việc', 322, 460, 355, 50, text_color='white',
                               fg_color='black', font=("", 13, "bold"), corner_radius=0, hover_color='#383838', command=lambda: self.nhomNut("LichLamViec", window))
         
         window.geometry(f"{xWindow}x{yWindow}+250+40")
