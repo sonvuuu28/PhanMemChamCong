@@ -3,7 +3,6 @@ import customtkinter as ctk
 from time import strftime
 from datetime import datetime
 from tkinter import messagebox
-#import face_recognition
 from datetime import datetime
 
 def msg_boxUtil(title, description):
