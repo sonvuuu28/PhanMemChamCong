@@ -18,7 +18,7 @@ sys.path.append(dto_dir)
 from LsccDTO import LsccDTO
 from NhanVienDTO import NhanVienDTO
 
-class ShiftGUI:
+class LichSuChamCongGUI:
     def __init__(self):
         self.shiftWindow = None
         self.is_view_detail = False
@@ -51,6 +51,17 @@ class ShiftGUI:
         frameShift = tk.Frame(self.shiftWindow, bg='#ffffff')
         frameShift.pack(fill=tk.BOTH, expand=True)
 
+        homeImage = Image.open(os.path.join(icon_dir, "home.png"))
+        tk_homeImage = ImageTk.PhotoImage(homeImage)
+        homeImageHover = Image.open(os.path.join(icon_dir, "homeHover.png"))
+        tk_homeImageHover = ImageTk.PhotoImage(homeImageHover)
+
+        label_home = tk.Label(frameShift, image=tk_homeImage, bg='white')
+        label_home.image = tk_homeImage
+        label_home.place(x=30, y=30)
+        label_home.bind("<Button-1>", lambda event: self.print_nut("Home", self.shiftWindow))
+        self.hover(label_home, tk_homeImage, tk_homeImageHover, None)
+        
         # Tạo giao diện bên trái (nơi nhập liệu)
         left_panel = tk.Frame(frameShift, bg="white", width=400)
         left_panel.grid(row=0, column=0, padx=10, pady=80, sticky="nsew")
@@ -168,7 +179,25 @@ class ShiftGUI:
             # Chèn dòng vào Treeview
             self.tree.insert('', 'end', values=row)
 
+    def enter_label(self, label, anhGoc, title):
+        label.config(image=anhGoc)
+        if title is not None:
+            title.config(fg='#5A5A5A')
+            
+    def leave_label(self, label, anhHover, title):
+        label.config(image=anhHover)
+        if title is not None:
+            title.config(fg='#000000')
+            
+    def hover(self, label, anhGoc, anhHover, title):
+        label.bind("<Enter>", lambda event: self.enter_label(label, anhHover, title))
+        label.bind("<Leave>", lambda event: self.leave_label(label, anhGoc, title))
 
+    def print_nut(self, nut, window=None):
+        if nut == "Home" and window:
+            window.destroy()
+            from n1_TrangChuGUI import TrangChuGUI
+            TrangChuGUI()
 
     def on_edit_button_click(self):
         """ Sự kiện khi nhấn nút Sửa """
@@ -225,4 +254,4 @@ class ShiftGUI:
                 self.tt_entry.set('Trễ giờ')
                 
 if __name__ == "__main__":
-    ShiftGUI()
+    LichSuChamCongGUI()
