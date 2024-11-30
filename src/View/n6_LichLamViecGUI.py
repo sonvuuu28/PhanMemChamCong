@@ -294,12 +294,14 @@ class LichLamViecGUI:
 
     def open_add_shift_modal(self):
         if not self.is_create_new_schedule: 
+            messagebox.showinfo("Thông báo", "Lịch làm đã tồn tại, không thể xếp thêm ca làm")
             return
         dataDate = (self.start_date, self.end_date)
         AddShiftModal(self.schedule_window, self.table_schedule ,dataDate)
 
     def open_edit_shift_modal(self):
         if not self.is_edit_schedule: 
+            messagebox.showinfo("Thông báo", "Chưa có lịch làm được chọn, vui lòng double click để chọn lịch")
             return
 
         # Chuyển đổi thành dictionary

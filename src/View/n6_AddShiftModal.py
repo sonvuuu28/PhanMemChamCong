@@ -192,10 +192,15 @@ class AddShiftModal:
                return
             self.render_table_schedule(self.schedules_add)
             messagebox.showinfo("Thông báo", "Thêm lịch thành công")
-            self.close_modal()
+            self.reset()
         else:
             return  # Người dùng chọn "No", không làm gì cả
         
+    def reset(self):
+        self.employee_combobox.set("")
+        for i in self.combobox_shifts:
+            i.set("")
+
     def build_data_add(self):
         if self.employee_combobox.get() == "":
             messagebox.showerror("Lỗi", "Nhân viên không được để trống")
