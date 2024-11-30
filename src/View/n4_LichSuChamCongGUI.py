@@ -233,7 +233,12 @@ class LichSuChamCongGUI:
             # print(shift_info)
 
             # Xóa nội dung cũ trước khi chèn mới
-            # self.mabcc.configure(state="normal")
+            self.nv_entry.configure(state="normal")
+            self.ngay_entry.configure(state="normal")
+            self.tgvao_entry.configure(state="normal")
+            self.tgra_entry.configure(state="normal")
+            self.tt_entry.configure(state="normal")
+            
             self.nv_entry.delete(0, tk.END)
             self.ngay_entry.delete(0, tk.END)
             self.tgvao_entry.delete(0, tk.END)
@@ -249,6 +254,13 @@ class LichSuChamCongGUI:
                 self.tt_entry.insert(0, 'Đúng giờ')
             else: 
                 self.tt_entry.insert(0, 'Trễ giờ')
+
+            self.nv_entry.configure(state="readonly")
+            self.ngay_entry.configure(state="readonly")
+            self.tgvao_entry.configure(state="readonly")
+            self.tgra_entry.configure(state="readonly")
+            self.tt_entry.configure(state="readonly")
+
                 
 if __name__ == "__main__":
     LichSuChamCongGUI()
