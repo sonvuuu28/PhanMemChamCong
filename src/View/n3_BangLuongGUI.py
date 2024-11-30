@@ -344,10 +344,10 @@ class BangLuongGUI:
             for nv in ds_nv:
                 ma_bl = self.bangluong_bus.taoma()
                 sogio=self.calculate_total_hours_minutes(nv.get_MaNhanVien(), self.month_cb.get(), self.year_cb.get())
-                hsluong = 1.5
+                hsluong = 24000
                 
                 if nv.get_ChucVu() == 'Quản Lý':
-                    hsluong = 1.7
+                    hsluong = 27000
 
                 luong = BangLuongDTO(ma_bl, self.month_cb.get(), self.year_cb.get(), 0, 0, hsluong, 0, nv.get_MaNhanVien(), 1, sogio)
                 self.bangluong_bus.insert(luong)
@@ -496,8 +496,7 @@ class BangLuongGUI:
         self.getData()
 
     def calc_tongluong(self, sogio, hesoluong, phucap, khautru ):
-        luong_co_ban = 24000
-        return round(float(sogio) * float(hesoluong) * float(luong_co_ban) + float(phucap) - float(khautru), 2)
+        return round(float(sogio) * float(hesoluong) + float(phucap) - float(khautru), 2)
 
     
     

@@ -81,7 +81,7 @@ class LichSuChamCongGUI:
 
         self.ngay_label = tk.Label(left_panel, text="Ngày:", bg="white")
         self.ngay_label.grid(row=1, column=0, padx=10, pady=10, sticky="w")
-        self.ngay_entry = DateEntry(left_panel, width=16, background="darkblue", foreground="white", borderwidth=2)
+        self.ngay_entry = DateEntry(left_panel, width=16, background="darkblue", foreground="white", borderwidth=2,date_pattern="dd/MM/yyyy")
         self.ngay_entry.grid(row=1, column=1, padx=10, pady=10)
         # Bắt sự kiện khi giá trị trong DateEntry thay đổi
         self.ngay_entry.bind("<<DateEntrySelected>>", self.on_date_change)
@@ -105,12 +105,9 @@ class LichSuChamCongGUI:
         self.tt_label.grid(row=4, column=0, padx=10, pady=10, sticky="w")
 
         # Tạo combobox với các giá trị "Đúng" và "Trễ"
-        self.tt_entry = ttk.Combobox(left_panel, width=18, state="readonly")
-        self.tt_entry['values'] = ["Đúng giờ", "Trễ giờ"]  # Các giá trị có thể chọn
+        self.tt_entry = tk.Entry(left_panel, width=20, bg='#E5E5E5')
         self.tt_entry.grid(row=4, column=1, padx=10, pady=10)
 
-        # Đặt giá trị mặc định cho combobox
-        self.tt_entry.set("Đúng giờ")
 
 
         # self.edit_button = tk.Button(left_panel, text="Sửa", command=self.on_edit_button_click)
@@ -249,9 +246,9 @@ class LichSuChamCongGUI:
             self.tgvao_entry.insert(0, shift_info[4])
             self.tgra_entry.insert(0, shift_info[5])
             if shift_info[6] == 'Dung gio':
-                self.tt_entry.set('Đúng giờ')
+                self.tt_entry.insert(0, 'Đúng giờ')
             else: 
-                self.tt_entry.set('Trễ giờ')
+                self.tt_entry.insert(0, 'Trễ giờ')
                 
 if __name__ == "__main__":
     LichSuChamCongGUI()
