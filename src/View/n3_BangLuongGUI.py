@@ -445,6 +445,7 @@ class BangLuongGUI:
                     res=self.bangluong_bus.update(luong_edit)
                     if res[0] == 1:
                         messagebox.showinfo("Thông báo", res[1])
+                        self.getData()
                         self.reset()
                     else:
                         messagebox.showerror("Lỗi", res[1])
