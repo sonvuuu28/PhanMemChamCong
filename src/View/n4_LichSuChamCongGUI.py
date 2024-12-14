@@ -251,10 +251,7 @@ class LichSuChamCongGUI:
             self.ngay_entry.insert(0, shift_info[3])
             self.tgvao_entry.insert(0, shift_info[4])
             self.tgra_entry.insert(0, shift_info[5])
-            if shift_info[6] == 'Dung gio':
-                self.tt_entry.insert(0, 'Đúng giờ')
-            else: 
-                self.tt_entry.insert(0, 'Trễ giờ')
+            self.tt_entry.insert(0, shift_info[6])
 
             self.nv_entry.configure(state="readonly")
             self.ngay_entry.configure(state="readonly")

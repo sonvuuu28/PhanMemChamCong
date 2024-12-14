@@ -290,7 +290,7 @@ class NhanVienDAO:
             cc.get_MaNhanVien(), cc.get_Ngay(),
             cc.get_MaNhanVien(), cc.get_Ngay(),
             cc.get_MaBCC(), cc.get_ThoiGianVao(), cc.get_ThoiGianRa(), 
-            cc.get_Ngay(), "Chưa đủ giờ", cc.get_MaNhanVien(), cc.get_deleteStatus())
+            cc.get_Ngay(), "Thiếu giờ", cc.get_MaNhanVien(), cc.get_deleteStatus())
             # cc.get_Ngay(), cc.get_TinhTrang(), cc.get_MaNhanVien(), cc.get_deleteStatus())
         
         try:
@@ -324,13 +324,21 @@ class NhanVienDAO:
         update_tinhtrang_query = '''
             UPDATE BangChamCong
             SET TinhTrang = CASE
-                WHEN DATEDIFF(MINUTE, bcc.ThoiGianVao, bcc.ThoiGianRa) >= (
-                    SELECT DATEDIFF(MINUTE, cl.ThoiGianVao, cl.ThoiGianRa)
-                    FROM CaLam AS cl
-                    JOIN LichLam AS ll ON ll.MaCa = cl.MaCa
-                    WHERE ll.MaNhanVien = bcc.MaNhanVien AND ll.Ngay = bcc.Ngay
-                ) THEN N'Đủ giờ'
-                ELSE N'Thiếu giờ'
+                WHEN (
+                    bcc.ThoiGianVao > (
+                        SELECT cl.ThoiGianVao
+                        FROM CaLam AS cl
+                        JOIN LichLam AS ll ON ll.MaCa = cl.MaCa
+                        WHERE ll.MaNhanVien = bcc.MaNhanVien AND ll.Ngay = bcc.Ngay
+                    )
+                    OR bcc.ThoiGianRa < (
+                        SELECT cl.ThoiGianRa
+                        FROM CaLam AS cl
+                        JOIN LichLam AS ll ON ll.MaCa = cl.MaCa
+                        WHERE ll.MaNhanVien = bcc.MaNhanVien AND ll.Ngay = bcc.Ngay
+                    )
+                ) THEN N'Thiếu giờ'
+                ELSE N'Đủ giờ'
             END
             FROM BangChamCong AS bcc
             WHERE bcc.MaNhanVien = ? AND bcc.Ngay = ?;
@@ -341,7 +349,7 @@ class NhanVienDAO:
             con.commit()
 
             if cursor.rowcount > 0:
-                print("Update checkout bảng chấm công thành công")
+                print("Cập nhật checkout thời gian ra thành công")
 
                 # Thực hiện cập nhật TinhTrang
                 Ngay = datetime.now().strftime('%Y-%m-%d')
@@ -350,16 +358,17 @@ class NhanVienDAO:
                 con.commit()
 
                 if cursor.rowcount > 0:  # Kiểm tra số dòng bị ảnh hưởng bởi câu lệnh SQL
-                        print("Update checkout bảng chấm công thành công")
-                        return 1
+                    print("Cập nhật tinh trạng bảng chấm công thành công")
+                    return 1
                 else:
-                        print("Update checkout bảng chấm công thất bại")
-                        con.rollback()
-                        return 0
+                    print("Cập nhật tinh trạng bảng chấm công thất bại")
+                    con.rollback()
+                    return 0
         except Exception as e:
-            print("Update checkout bảng chấm công thất bại except")
+            print("Cập nhật checkout bảng chấm công thất bại:", e)
             con.rollback()
             return 0
+
 
     
     # def update_BangChamCong_checkOut(self, ThoiGianRa, MaNhanVien):
