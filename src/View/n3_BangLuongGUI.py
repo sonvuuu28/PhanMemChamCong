@@ -25,7 +25,8 @@ from NhanVienBUS import NhanVienBUS
 
 
 class BangLuongGUI:
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
         # Đường dẫn đến folder Icon
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.icon_dir = os.path.join(current_dir, '../Icon')
@@ -66,7 +67,7 @@ class BangLuongGUI:
     def back_Trang_Chu(self, window):
         window.destroy()
         from n1_TrangChuGUI import TrangChuGUI
-        TrangChuGUI()
+        TrangChuGUI(self.id)
     
     def enter_label(self, label, anhGoc, title):
         label.config(image=anhGoc)

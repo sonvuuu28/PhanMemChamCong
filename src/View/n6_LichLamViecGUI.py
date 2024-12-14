@@ -29,7 +29,8 @@ from NhanVienBUS import NhanVienBUS
 
 
 class LichLamViecGUI:
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id 
         # Đường dẫn đến folder Icon
         self.icon_dir = os.path.join(current_dir, '../Icon')
 
@@ -254,13 +255,12 @@ class LichLamViecGUI:
     def back_TrangChu(self, window):
             window.destroy()
             from n1_TrangChuGUI import TrangChuGUI
-            TrangChuGUI()
+            TrangChuGUI(self.id)
     
     def show_shift_window(self):
-        print("Tạo Ca Làm")
         self.schedule_window.destroy()
         from n6_CaLamGUI import ShiftGUI
-        ShiftGUI()
+        ShiftGUI(self.id)
 
     def on_double_click(self, event):
         # Lấy item được chọn khi nhấp đúp

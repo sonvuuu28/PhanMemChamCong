@@ -2,6 +2,7 @@ from Connection import Connection
 import pyodbc
 import os
 import sys
+from datetime import datetime
 # Lấy đường dẫn của thư mục hiện tại và thêm đường dẫn tới thư mục DTO
 current_dir = os.path.dirname(os.path.abspath(__file__))
 dto_dir = os.path.join(current_dir, '../DTO')
@@ -269,17 +270,29 @@ class NhanVienDAO:
         con = self.connection.getConnection()
         cursor = con.cursor()
         insert_query = '''
-        IF NOT EXISTS (
-            SELECT 1 FROM BangChamCong WHERE MaNhanVien = ? AND Ngay = ?
+        IF EXISTS (
+            SELECT 1 
+            FROM LichLam
+            WHERE MaNhanVien = ? AND Ngay = ?
         )
-        Begin
-            INSERT INTO BangChamCong(MaBCC, ThoiGianVao, ThoiGianRa, Ngay, TinhTrang, MaNhanVien, Status) VALUES (?, ?, ?, ?, ?, ?, ?)
-        end
+        AND NOT EXISTS (
+            SELECT 1 
+            FROM BangChamCong
+            WHERE MaNhanVien = ? AND Ngay = ?
+
+        )
+        BEGIN
+            INSERT INTO BangChamCong(MaBCC, ThoiGianVao, ThoiGianRa, Ngay, TinhTrang, MaNhanVien, Status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        END
         '''
         employee_data = (
             cc.get_MaNhanVien(), cc.get_Ngay(),
+            cc.get_MaNhanVien(), cc.get_Ngay(),
             cc.get_MaBCC(), cc.get_ThoiGianVao(), cc.get_ThoiGianRa(), 
-            cc.get_Ngay(), cc.get_TinhTrang(), cc.get_MaNhanVien(), cc.get_deleteStatus())
+            cc.get_Ngay(), "Chưa đủ giờ", cc.get_MaNhanVien(), cc.get_deleteStatus())
+            # cc.get_Ngay(), cc.get_TinhTrang(), cc.get_MaNhanVien(), cc.get_deleteStatus())
+        
         try:
             cursor.execute(insert_query, employee_data)
             con.commit()
@@ -294,30 +307,84 @@ class NhanVienDAO:
             print("Thêm bảng chấm công thất bại except")
             con.rollback()
             return 0
-        
+    
     def update_BangChamCong_checkOut(self, ThoiGianRa, MaNhanVien):
         con = self.connection.getConnection()
         cursor = con.cursor()
-        insert_query = '''
-            update BangChamCong
-            set ThoiGianRa = ?
-            where MaNhanVien = ? and ThoiGianRa = ThoiGianVao
+
+        # Cập nhật ThoiGianRa
+        update_checkout_query = '''
+            UPDATE BangChamCong
+            SET ThoiGianRa = ?
+            WHERE MaNhanVien = ? AND ThoiGianRa = ThoiGianVao
         '''
         employee_data = (ThoiGianRa, MaNhanVien)
+
+        # Cập nhật TinhTrang
+        update_tinhtrang_query = '''
+            UPDATE BangChamCong
+            SET TinhTrang = CASE
+                WHEN DATEDIFF(MINUTE, bcc.ThoiGianVao, bcc.ThoiGianRa) >= (
+                    SELECT DATEDIFF(MINUTE, cl.ThoiGianVao, cl.ThoiGianRa)
+                    FROM CaLam AS cl
+                    JOIN LichLam AS ll ON ll.MaCa = cl.MaCa
+                    WHERE ll.MaNhanVien = bcc.MaNhanVien AND ll.Ngay = bcc.Ngay
+                ) THEN N'Đủ giờ'
+                ELSE N'Thiếu giờ'
+            END
+            FROM BangChamCong AS bcc
+            WHERE bcc.MaNhanVien = ? AND bcc.Ngay = ?;
+        '''
         try:
-            cursor.execute(insert_query, employee_data)
+            # Thực hiện cập nhật ThoiGianRa
+            cursor.execute(update_checkout_query, employee_data)
             con.commit()
-            if cursor.rowcount > 0:  # Kiểm tra số dòng bị ảnh hưởng bởi câu lệnh SQL
-                    print("Update checkout bảng chấm công thành công")
-                    return 1
-            else:
-                    print("Update checkout bảng chấm công thất bại")
-                    con.rollback()
-                    return 0
+
+            if cursor.rowcount > 0:
+                print("Update checkout bảng chấm công thành công")
+
+                # Thực hiện cập nhật TinhTrang
+                Ngay = datetime.now().strftime('%Y-%m-%d')
+                tinhtrang_data = (MaNhanVien, Ngay)
+                cursor.execute(update_tinhtrang_query, tinhtrang_data)
+                con.commit()
+
+                if cursor.rowcount > 0:  # Kiểm tra số dòng bị ảnh hưởng bởi câu lệnh SQL
+                        print("Update checkout bảng chấm công thành công")
+                        return 1
+                else:
+                        print("Update checkout bảng chấm công thất bại")
+                        con.rollback()
+                        return 0
         except Exception as e:
             print("Update checkout bảng chấm công thất bại except")
             con.rollback()
             return 0
+
+    
+    # def update_BangChamCong_checkOut(self, ThoiGianRa, MaNhanVien):
+    #     con = self.connection.getConnection()
+    #     cursor = con.cursor()
+    #     insert_query = '''
+    #         update BangChamCong
+    #         set ThoiGianRa = ?
+    #         where MaNhanVien = ? and ThoiGianRa = ThoiGianVao
+    #     '''
+    #     employee_data = (ThoiGianRa, MaNhanVien)
+    #     try:
+    #         cursor.execute(insert_query, employee_data)
+    #         con.commit()
+    #         if cursor.rowcount > 0:  # Kiểm tra số dòng bị ảnh hưởng bởi câu lệnh SQL
+    #                 print("Update checkout bảng chấm công thành công")
+    #                 return 1
+    #         else:
+    #                 print("Update checkout bảng chấm công thất bại")
+    #                 con.rollback()
+    #                 return 0
+    #     except Exception as e:
+    #         print("Update checkout bảng chấm công thất bại except")
+    #         con.rollback()
+    #         return 0
     
 def test():
     bang_cham_cong = BangChamCongDTO("BCC001", "08:00:00", "17:00:00", "2024-10-21", "Đi làm", "NV001", True)

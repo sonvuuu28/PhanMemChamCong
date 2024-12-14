@@ -5,10 +5,26 @@ from PIL import Image, ImageTk
 from tkcalendar import DateEntry
 import datetime
 import os
+import sys
+current_dir = os.path.dirname(os.path.abspath(__file__))
+dto_dir = os.path.join(current_dir, '../DTO')
+sys.path.append(dto_dir)
+from NhanVienDTO import NhanVienDTO
+
+bus_dir = os.path.join(current_dir, '../BUS')
+sys.path.append(bus_dir)
+from NhanVienBUS import NhanVienBUS
+
+dao_dir = os.path.join(current_dir, '../DAO')
+sys.path.append(dao_dir)
+from NhanVienDAO import NhanVienDAO
 
 class ThongTinTaiKhoanGUI:
     
-    def __init__(self):
+    def __init__(self, id):
+        nv_dao = NhanVienDAO.getInstance()
+        self.nv = nv_dao.TimKiem_Theo_Ma(id)
+        
         # Đường dẫn đến folder Icon
         current_dir = os.path.dirname(os.path.abspath(__file__))
         self.icon_dir = os.path.join(current_dir, '../Icon')
@@ -38,13 +54,13 @@ class ThongTinTaiKhoanGUI:
         utilView.labelUtil(frameBiggest,'SĐT',20, 260, bg='#ffffff', font=("Arial", 12, "bold"))
         utilView.labelUtil(frameBiggest,'Chức Vụ',20, 300, bg='#ffffff', font=("Arial", 12, "bold"))
 
-        utilView.labelUtil(frameBiggest,'NV001',120, 60, bg='#ffffff', font=("Arial", 12, "italic"))
-        utilView.labelUtil(frameBiggest,'Nguyễn Văn A',120, 100, bg='#ffffff', font=("Arial", 12, "italic"))
-        utilView.labelUtil(frameBiggest,'28/01/2004',120, 140, bg='#ffffff', font=("Arial", 12, "italic"))
-        utilView.labelUtil(frameBiggest,'Nam',120, 180, bg='#ffffff', font=("Arial", 12, "italic"))
-        utilView.labelUtil(frameBiggest,'123 An Dương Vương',120, 220, bg='#ffffff', font=("Arial", 12, "italic"))
-        utilView.labelUtil(frameBiggest,'0825143790',120, 260, bg='#ffffff', font=("Arial", 12, "italic"))
-        utilView.labelUtil(frameBiggest,'Nhân Viên',120, 300, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_MaNhanVien(),120, 60, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_Ten(),120, 100, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_NgaySinh().strftime('%d/%m/%Y'),120, 140, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_GioiTinh(),120, 180, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_DiaChi(),120, 220, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_SDT(),120, 260, bg='#ffffff', font=("Arial", 12, "italic"))
+        utilView.labelUtil(frameBiggest,self.nv.get_ChucVu(),120, 300, bg='#ffffff', font=("Arial", 12, "italic"))
 
 
         window.mainloop()

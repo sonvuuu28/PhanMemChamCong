@@ -6,7 +6,9 @@ from time import strftime
 import os
 
 class TrangChuGUI:
-    def __init__(self):
+    def __init__(self, id = None):
+        self.id = id
+        print(id)
         # self.User = self.getUser()
         # print(self.User)
         self.label_chuong = None
@@ -39,7 +41,7 @@ class TrangChuGUI:
         if name == "NV" and window:
             window.destroy() 
             from n2_NhanVienGUI import NhanVienGUI
-            NhanVienGUI()
+            NhanVienGUI(self.id)
             
         if name == "DangXuat" and window:
             window.destroy() 
@@ -49,31 +51,33 @@ class TrangChuGUI:
         if name == "Luong" and window:
             window.destroy() 
             from n3_BangLuongGUI import BangLuongGUI
-            BangLuongGUI()
+            BangLuongGUI(self.id)
             
         if name == "LichSuChamCong" and window:
             window.destroy() 
             from n4_LichSuChamCongGUI import LichSuChamCongGUI
-            LichSuChamCongGUI()
+            LichSuChamCongGUI(self.id)
         
         if name == "LichLamViec" and window:
             window.destroy() 
             from n6_LichLamViecGUI import LichLamViecGUI
-            LichLamViecGUI()
+            LichLamViecGUI(self.id)
             
-        if name == "GhiChu" and window:
-            from n5_GhiChuGUI import GhiChuGUI
-            GhiChuGUI()
+        # if name == "GhiChu" and window:
+        #     from n5_GhiChuGUI import GhiChuGUI
+        #     GhiChuGUI()
             
-        if name == "Chuong" and window:
-            # window.destroy() 
-            from n7_ThongBaoGUI import ThongBaoGUI
-            thongBao = ThongBaoGUI()
+        # if name == "Chuong" and window:
+        #     # window.destroy() 
+        #     from n7_ThongBaoGUI import ThongBaoGUI
+        #     thongBao = ThongBaoGUI()
             
         if name == "Profile" and window:
             # window.destroy() 
             from n8_ThongTinTaiKhoan import ThongTinTaiKhoanGUI
-            ThongTinTaiKhoanGUI()
+            # ThongTinTaiKhoanGUI()
+            ThongTinTaiKhoanGUI(self.id)
+            
         
     def UI(self):
         window = tk.Tk()

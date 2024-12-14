@@ -23,7 +23,8 @@ sys.path.append(dao_dir)
 from NhanVienDAO import NhanVienDAO
 
 class NhanVienGUI:
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
         self.BtnThem = None
         self.BtnSua = None
         self.BtnXoa = None
@@ -109,7 +110,7 @@ class NhanVienGUI:
         if nut == "Home" and window:
             window.destroy()
             from n1_TrangChuGUI import TrangChuGUI
-            TrangChuGUI()
+            TrangChuGUI(self.id)
             
         if nut == "ChonTK" and window:
             from n2_TaiKhoanGUI import TaiKhoanGUI
@@ -131,13 +132,12 @@ class NhanVienGUI:
 
       
     def listBang(self):
-        # Xóa tất cả các hàng hiện có trong bảng
         self.tree.delete(*self.tree.get_children())
         nv_bus = NhanVienBUS.getInstance()
         danh_sach_nv = nv_bus.list()
         num = 1
         for i in danh_sach_nv:
-            self.tree.insert("", "end", text=str(num), values=(i.get_MaNhanVien(), i.get_Ten(), i.get_NgaySinh(), i.get_GioiTinh(), i.get_DiaChi(), i.get_SDT(), i.get_ChucVu(), i.get_HinhAnh()))
+            self.tree.insert("", "end", text=str(num), values=(i.get_MaNhanVien(), i.get_Ten(), i.get_NgaySinh().strftime('%d/%m/%Y'), i.get_GioiTinh(), i.get_DiaChi(), i.get_SDT(), i.get_ChucVu(), i.get_HinhAnh()))
             num += 1
             
     def delete(self):

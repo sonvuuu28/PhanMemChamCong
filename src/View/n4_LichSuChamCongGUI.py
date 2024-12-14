@@ -19,7 +19,8 @@ from LsccDTO import LsccDTO
 from NhanVienDTO import NhanVienDTO
 
 class LichSuChamCongGUI:
-    def __init__(self):
+    def __init__(self, id):
+        self.id = id
         self.shiftWindow = None
         self.is_view_detail = False
 
@@ -194,7 +195,7 @@ class LichSuChamCongGUI:
         if nut == "Home" and window:
             window.destroy()
             from n1_TrangChuGUI import TrangChuGUI
-            TrangChuGUI()
+            TrangChuGUI(self.id)
 
     def on_edit_button_click(self):
         """ Sự kiện khi nhấn nút Sửa """

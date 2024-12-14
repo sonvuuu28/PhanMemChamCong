@@ -47,11 +47,11 @@ class LoginGUI:
                 if Quyen == 'Q001':  
                     print(MaNhanVien)
                     from n1_TrangChuGUI import TrangChuGUI
-                    TrangChuGUI()
+                    TrangChuGUI(MaNhanVien)
                 elif Quyen == 'Q002':
                     print(MaNhanVien)
                     from n1_TrangChuGUI import TrangChuGUI
-                    TrangChuGUI()
+                    TrangChuGUI(MaNhanVien)
                 elif Quyen == 'Q003':
                     from n1_MayChamCongGUI import MayChamCongGUI
                     MayChamCongGUI()
